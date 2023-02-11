@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>Birbs!</title>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+     integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
+     crossorigin=""/>
+	  <!-- Make sure you put this AFTER Leaflet's CSS -->
+	<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+		integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
+		crossorigin=""></script>
+	<link rel="icon" type="image/x-icon" href="C:\Users\admin\Documents\BirdSpotter\763827200.png">
+		<style>
+			#leftbox {
+				float:left;
+				width:33%;
+				height:50%;
+			}
+			#middlebox {
+				float:left;
+				width:33%;
+				height:50%;
+				padding-left:.5%;
+			}
+			#rightbox {
+				float:right;
+				width:33%;
+				height:50%;
+			}
+			#map {
+				height: 400px;
+			}
+		</style>
+</head>
+<body>
+	<div id="map"></div>
+	<table id="birbs">
+	</table>
+	<input id="clickMe" type="button" value="Get them birbs!" onclick="getBirds();" />
+
+	<script>
+		var mymap = '';
+		var params = {
+			key: 'eo0j01ma9l9e',
+			lat: '',
+			lng: ''
+			// snoowl1, baleag, coohaw
+		};
+		console.log(params);
+		var url = '';
+
+		if ('geolocation' in navigator) {
+			console.log('location good');
+			navigator.geolocation.getCurrentPosition(function(position)
+			{
+				params.lat = position.coords.latitude;
+				latitood = position.coords.latitude;
+				params.lng = position.coords.longitude;
+				longitood = position.coords.longitude;
+				console.log(params);
+				var esc = encodeURIComponent;
+				var query = Object.keys(params)
+				.map(function(k) {return esc(k) + '=' + esc(params[k]);})
+				.join('&');
+				url = 'https://api.ebird.org/v2/data/obs/geo/recent/baleag?&' + query;
+				var mymap = L.map('map').setView([params.lat, params.lng], 13);
+				L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+					maxZoom: 19,
+					attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+				}).addTo(mymap);
+				var marker = L.marker([params.lat, params.lng]).addTo(mymap);
+			});
+			
+		} else {
+			console.log('location bad');
+		};
+
+
+
+		async function getBirds() {
+			var birdsContainer = document.getElementById("birbs");
+			const response = await fetch(url);
+			const birds = await response.json();
+			console.log(birds);
+			for (var i = 0; i < birds.length; i++) {
+				console.log(birds.length);
+				var row = document.createElement("tr");
+				row.innerHTML =  birds[i].comName + ' | ' + birds[i].obsDt + ' | ' + birds[i].locName;
+				birdsContainer.appendChild(row);		
+			};
+		};
+
+	</script>
+
+</body>
+</html>
