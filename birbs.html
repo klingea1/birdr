@@ -10,28 +10,12 @@
 	<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
 		integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
 		crossorigin=""></script>
-	<link rel="icon" type="image/x-icon" href="C:\Users\admin\Documents\BirdSpotter\763827200.png">
-		<style>
-			#leftbox {
-				float:left;
-				width:33%;
-				height:50%;
-			}
-			#middlebox {
-				float:left;
-				width:33%;
-				height:50%;
-				padding-left:.5%;
-			}
-			#rightbox {
-				float:right;
-				width:33%;
-				height:50%;
-			}
-			#map {
-				height: 400px;
-			}
-		</style>
+	<link rel="icon" type="image/x-icon" href=".\763827200.png">
+	<style>
+		#map {
+			height:450px;
+		}
+	</style>
 </head>
 <body>
 	<div id="map"></div>
@@ -40,36 +24,65 @@
 	<input id="clickMe" type="button" value="Get them birbs!" onclick="getBirds();" />
 
 	<script>
+		//initialize map vaiable for Leaflet
 		var mymap = '';
+
+		//bird icon for Leaflet markers
+		var birdIcon = L.icon({
+			iconUrl: './3362417.png',
+			shadowUrl: '',
+
+			iconSize:     [38, 95], // size of the icon
+			shadowSize:   [50, 64], // size of the shadow
+			iconAnchor:   [22, 94], // point of the icon which will correspond to marker's location
+			shadowAnchor: [4, 62],  // the same for the shadow
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		});
+
+		//user icon for Leaflet markers
+		var myIcon = L.icon({
+			iconUrl: './2503463.png',
+			shadowUrl: '',
+
+			iconSize:     [55, 55], // size of the icon
+			shadowSize:   [50, 64], // size of the shadow
+			iconAnchor:   [22, 94], // point of the icon which will correspond to marker's location
+			shadowAnchor: [4, 62],  // the same for the shadow
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		});
+
+
+
+		//url parameters for ebird API
 		var params = {
 			key: 'eo0j01ma9l9e',
 			lat: '',
 			lng: ''
 			// snoowl1, baleag, coohaw
 		};
-		console.log(params);
 		var url = '';
 
+		//check if browser suppots geolocation, then get location and update params & url, and set initial map state
 		if ('geolocation' in navigator) {
 			console.log('location good');
 			navigator.geolocation.getCurrentPosition(function(position)
 			{
 				params.lat = position.coords.latitude;
-				latitood = position.coords.latitude;
 				params.lng = position.coords.longitude;
-				longitood = position.coords.longitude;
 				console.log(params);
 				var esc = encodeURIComponent;
 				var query = Object.keys(params)
 				.map(function(k) {return esc(k) + '=' + esc(params[k]);})
 				.join('&');
 				url = 'https://api.ebird.org/v2/data/obs/geo/recent/baleag?&' + query;
+				
+				//draw the map centered on current location
 				var mymap = L.map('map').setView([params.lat, params.lng], 13);
 				L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 					maxZoom: 19,
 					attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 				}).addTo(mymap);
-				var marker = L.marker([params.lat, params.lng]).addTo(mymap);
+				var myMarker = L.marker([params.lat, params.lng], {icon: myIcon}).addTo(mymap).bindPopup("<b>My Location</b><br />",params.lat,params.lng);
 			});
 			
 		} else {
@@ -77,7 +90,7 @@
 		};
 
 
-
+		//fetch the ebird api and add results to table rows, drop a bird icon on each location
 		async function getBirds() {
 			var birdsContainer = document.getElementById("birbs");
 			const response = await fetch(url);
@@ -87,7 +100,8 @@
 				console.log(birds.length);
 				var row = document.createElement("tr");
 				row.innerHTML =  birds[i].comName + ' | ' + birds[i].obsDt + ' | ' + birds[i].locName;
-				birdsContainer.appendChild(row);		
+				birdsContainer.appendChild(row);
+				var marker = L.marker([birds[i].lat, birds[i].lng], {icon: birdIcon}).addTo(mymap);		
 			};
 		};
 
