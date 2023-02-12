@@ -15,6 +15,15 @@
 		#birdmap {
 			height:450px;
 		}
+		#birbds {
+			width: 50%;
+			border: 1px solid;
+			border-collapse: collapse;
+		}
+		th, td { 
+			padding-left: 5px;
+		}
+		tr:hover {background-color: cadetblue;}
 	</style>
 </head>
 <body>
@@ -49,7 +58,7 @@
 			shadowSize:   [50, 64], // size of the shadow
 			iconAnchor:   [27, 27], // point of the icon which will correspond to marker's location
 			shadowAnchor: [4, 62],  // the same for the shadow
-			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+			popupAnchor:  [-3, -26] // point from which the popup should open relative to the iconAnchor
 		});
 
 		//user icon for Leaflet markers
@@ -88,21 +97,20 @@
 		};
 
 
-		//fetch the ebird api and add results to table rows, drop a bird icon on each location
+		//bang the url & params against the ebird api and add results to table rows, drop a bird icon on each location
 		async function getBirds() {
 			var birdsContainer = document.getElementById("birbs");
 			const response = await fetch(url);
 			const birds = await response.json();
 			console.log(birds);
 			for (var i = 0; i < birds.length; i++) {
-				console.log(birds.length);
+				console.log('got ' + birds.length + ' bird records');
 				var row = document.createElement("tr");
-				row.innerHTML =  birds[i].comName + ' | ' + birds[i].obsDt + ' | ' + birds[i].locName;
+				row.innerHTML = '<td>' + birds[i].comName + '</td><td>' + birds[i].obsDt + '</td><td>' + birds[i].locName + '</td>';
 				birdsContainer.appendChild(row);	
 			};
 			for (var j = 0; j < birds.length; j++) {
-				var popInfo = birds[j].comName + ' | ' + birds[j].obsDt;
-				console.log(popInfo);
+				var popInfo = '<b>' + birds[j].comName + '</b><br />' + birds[j].obsDt;
 				L.marker([birds[j].lat,birds[j].lng], {icon:birdIcon}).addTo(mymap).bindPopup(popInfo);
 			}
 			mymap.setView([params.lat, params.lng],10);
