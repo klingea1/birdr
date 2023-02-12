@@ -33,7 +33,7 @@
 		};
 		var url = '';
 
-		//initialize map variable for Leaflet
+		//initialize map for Leaflet
 		const mymap = L.map('birdmap').setView([43.07414327330782, -85.66504753854788], 9);
 		const attribution = '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap';
 		const tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -42,7 +42,7 @@
 
 		//bird icon for Leaflet markers
 		var birdIcon = L.icon({
-			iconUrl: './3362417.png',
+			iconUrl: './293092.png',
 			shadowUrl: '',
 
 			iconSize:     [45, 45], // size of the icon
@@ -64,7 +64,7 @@
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		});
 
-		//check if browser suppots geolocation, then get location and update params & url, and set initial map state
+		//check if browser suppots geolocation, then get location and update params & url, and recenter map on your location
 		if ('geolocation' in navigator) {
 			console.log('location good');
 			navigator.geolocation.getCurrentPosition(function(position)
@@ -78,7 +78,7 @@
 				.join('&');
 				url = 'https://api.ebird.org/v2/data/obs/geo/recent/baleag?&' + query;
 				
-				//recenter the map to  current location
+				//recenter the map to current location
 				mymap.setView([params.lat, params.lng],13);
 				L.marker([params.lat, params.lng], {icon: myIcon}).addTo(mymap).bindPopup("<b>My Location</b><br />",params.lat,params.lng);
 			});
@@ -101,7 +101,9 @@
 				birdsContainer.appendChild(row);	
 			};
 			for (var j = 0; j < birds.length; j++) {
-				L.marker([birds[j].lat,birds[j].lng], {icon:birdIcon}).addTo(mymap).bindPopup(birds.comName);
+				var popInfo = birds[j].comName + ' | ' + birds[j].obsDt;
+				console.log(popInfo);
+				L.marker([birds[j].lat,birds[j].lng], {icon:birdIcon}).addTo(mymap).bindPopup(popInfo);
 			}
 			mymap.setView([params.lat, params.lng],10);
 		};
