@@ -1,3 +1,7 @@
-# My GitHub Project
+# Avian Awareness
+Go get them birbs.
 
-This is my GitHub project. I published it directly from Visual Studio Code.
+
+# Resources
+ebird API
+Leaflet.js
