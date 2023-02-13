@@ -4,33 +4,49 @@
 	<meta charset="utf-8" />
 	<title>Birbs!</title>
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
-     integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
-     crossorigin=""/>
+    	integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
+    	crossorigin=""/>
 	<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
 		integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
 		crossorigin=""></script>
-	<link rel="icon" type="image/x-icon" href=".\763827200.png">
-	<!--Leafelet requires a starting height for maps or will assume 0-->
+	<link rel="icon" type="image/x-icon" href=".\293092.png">
 	<style>
-		#birdmap {
+		#birdmap { /* Leafelet requires a starting height for maps or will assume 0 */
 			height:450px;
 		}
-		#birbds {
-			width: 50%;
+		#birbs {
+			width: 100%;
 			border: 1px solid;
 			border-collapse: collapse;
 		}
 		th, td { 
 			padding-left: 5px;
 		}
-		tr:hover {background-color: cadetblue;}
+		tr:hover {
+			background-color: cadetblue;
+			color: antiquewhite;
+		}
+		
 	</style>
 </head>
 <body>
-	<div id="birdmap"></div>
+	<div id="birdmap"></div> <br />
+	
+	<label for="species">Choose bird species:</label>
+	<select name="species" id="species">
+		<option value="baleag">Bald Eagle</option>
+		<option value="coohaw">Cooper's Hawk</option>
+		<option value="snoowl1">Snowy Owl</option>
+	</select>
+	
+	<button onclick="getBirds()">Get them birbs!</button>
+
+	<button onclick="mymap.setView([params.lat, params.lng],10)">Re-center map</button>
+	
 	<table id="birbs">
+		<tr id="birdRow"></tr>
 	</table>
-	<input id="clickMe" type="button" value="Get them birbs!" onclick="getBirds();" />
+
 
 	<script>
 		//url parameters for ebird API
@@ -49,11 +65,12 @@
 		const tiles = L.tileLayer(tileUrl,{attribution});
 		tiles.addTo(mymap);
 
+		var birdMarkers = L.featureGroup();
+
 		//bird icon for Leaflet markers
 		var birdIcon = L.icon({
 			iconUrl: './293092.png',
 			shadowUrl: '',
-
 			iconSize:     [45, 45], // size of the icon
 			shadowSize:   [50, 64], // size of the shadow
 			iconAnchor:   [27, 27], // point of the icon which will correspond to marker's location
@@ -65,8 +82,7 @@
 		var myIcon = L.icon({
 			iconUrl: './2503463.png',
 			shadowUrl: '',
-
-			iconSize:     [55, 55], // size of the icon
+			iconSize:     [60, 60], // size of the icon
 			shadowSize:   [50, 64], // size of the shadow
 			iconAnchor:   [27, 27], // point of the icon which will correspond to marker's location
 			shadowAnchor: [4, 62],  // the same for the shadow
@@ -81,11 +97,7 @@
 				params.lat = position.coords.latitude;
 				params.lng = position.coords.longitude;
 				console.log(params);
-				var esc = encodeURIComponent;
-				var query = Object.keys(params)
-				.map(function(k) {return esc(k) + '=' + esc(params[k]);})
-				.join('&');
-				url = 'https://api.ebird.org/v2/data/obs/geo/recent/baleag?&' + query;
+
 				
 				//recenter the map to current location
 				mymap.setView([params.lat, params.lng],13);
@@ -96,23 +108,46 @@
 			console.log('location bad');
 		};
 
-
-		//bang the url & params against the ebird api and add results to table rows, drop a bird icon on each location
+		//get ebirds APi info on button click
 		async function getBirds() {
+			//get value from species selector
+			var e = document.getElementById("species");
+			var selectValue = e.value;
+			var selectText = e.options[e.selectedIndex].text;
+			console.log(selectValue);
+
+			//clear any bird icons or table rows that are already on the screen
 			var birdsContainer = document.getElementById("birbs");
+			var rowCount = birdsContainer.rows.length;
+			for (var i = rowCount - 1; i > 0; i--) {
+				birdsContainer.deleteRow(i);
+			};
+			birdMarkers.clearLayers();
+
+			//bang the url & params against the ebird api and add results to table rows
+			var esc = encodeURIComponent;
+				var query = Object.keys(params)
+				.map(function(k) {return esc(k) + '=' + esc(params[k]);})
+				.join('&');
+				url = 'https://api.ebird.org/v2/data/obs/geo/recent/' + selectValue + '?&' + query;
 			const response = await fetch(url);
 			const birds = await response.json();
 			console.log(birds);
 			for (var i = 0; i < birds.length; i++) {
 				console.log('got ' + birds.length + ' bird records');
 				var row = document.createElement("tr");
-				row.innerHTML = '<td>' + birds[i].comName + '</td><td>' + birds[i].obsDt + '</td><td>' + birds[i].locName + '</td>';
+				row.innerHTML = '<td id="birdRow">' + birds[i].comName + '</td><td>' + birds[i].obsDt + '</td><td>' + birds[i].locName + '</td>';
 				birdsContainer.appendChild(row);	
 			};
+
+			//drop a bird icon on each location
 			for (var j = 0; j < birds.length; j++) {
 				var popInfo = '<b>' + birds[j].comName + '</b><br />' + birds[j].obsDt;
-				L.marker([birds[j].lat,birds[j].lng], {icon:birdIcon}).addTo(mymap).bindPopup(popInfo);
-			}
+				L.marker([birds[j].lat,birds[j].lng], {icon:birdIcon}).addTo(birdMarkers).bindPopup(popInfo);
+				birdMarkers.addTo(mymap);
+			};
+
+			//re-center the map & set zoom appropriate to results when done
 			mymap.setView([params.lat, params.lng],10);
 		};
 
