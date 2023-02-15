@@ -47,7 +47,6 @@
 		<tr id="birdRow"></tr>
 	</table>
 
-
 	<script>
 		//url parameters for ebird API
 		var params = {
@@ -56,15 +55,17 @@
 			lng: ''
 			// snoowl1, baleag, coohaw
 		};
+
 		var url = '';
 
 		//initialize map for Leaflet
-		const mymap = L.map('birdmap').setView([43.07414327330782, -85.66504753854788], 9);
+		const mymap = L.map('birdmap').setView([0, 0], 9);
 		const attribution = '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap';
 		const tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 		const tiles = L.tileLayer(tileUrl,{attribution});
 		tiles.addTo(mymap);
-
+		
+		//create marker group for birds, enables easy clearing of the canvas when changing species
 		var birdMarkers = L.featureGroup();
 
 		//bird icon for Leaflet markers
@@ -89,6 +90,9 @@
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		});
 
+		//create user location as const for cleaner updating of location using myMarker.setLatLng()
+		const myMarker = L.marker([0, 0], {icon: myIcon}).addTo(mymap).bindPopup("<b>My Location</b><br />",params.lat,params.lng);
+
 		//check if browser suppots geolocation, then get location and update params & url, and recenter map on your location
 		if ('geolocation' in navigator) {
 			console.log('location good');
@@ -97,11 +101,10 @@
 				params.lat = position.coords.latitude;
 				params.lng = position.coords.longitude;
 				console.log(params);
-
-				
+			
 				//recenter the map to current location
 				mymap.setView([params.lat, params.lng],13);
-				L.marker([params.lat, params.lng], {icon: myIcon}).addTo(mymap).bindPopup("<b>My Location</b><br />",params.lat,params.lng);
+				myMarker.setLatLng([params.lat, params.lng]);
 			});
 			
 		} else {
