@@ -39,9 +39,9 @@
 		<option value="snoowl1">Snowy Owl</option>
 	</select>
 	
-	<button onclick="getBirds()">Get them birbs!</button>
+	<button id="getBirds" onclick="getBirds()">Get them birbs!</button>
 
-	<button onclick="mymap.setView([params.lat, params.lng],10)">Re-center map</button>
+	<button id="reMap" onclick="mymap.setView([params.lat, params.lng],10)">Re-center map</button>
 	
 	<table id="birbs">
 		<tr id="birdRow"></tr>
