@@ -26,17 +26,18 @@
 			background-color: cadetblue;
 			color: antiquewhite;
 		}
+		#species {
+			width: 25%;
+		}
 		
 	</style>
 </head>
 <body>
 	<div id="birdmap"></div> <br />
-	
+
 	<label for="species">Choose bird species:</label>
 	<select name="species" id="species">
-		<option value="baleag">Bald Eagle</option>
-		<option value="coohaw">Cooper's Hawk</option>
-		<option value="snoowl1">Snowy Owl</option>
+
 	</select>
 	
 	<button id="getBirds" onclick="getBirds()">Get them birbs!</button>
@@ -56,7 +57,11 @@
 			// snoowl1, baleag, coohaw
 		};
 
-		var url = '';
+		//ebird API url
+		var url = 'https://api.ebird.org/v2/data/obs/geo/recent/';
+
+		//empty nearby sightings array
+		var nearMe = [];
 
 		//initialize map for Leaflet
 		const mymap = L.map('birdmap').setView([0, 0], 9);
@@ -104,13 +109,67 @@
 			
 				//recenter the map to current location
 				mymap.setView([params.lat, params.lng],13);
-				myMarker.setLatLng([params.lat, params.lng]);
+				myMarker.setLatLng([params.lat, params.lng]);	
+				
+				//fetch recent nearby sightings and populate species select options
+				async function getNearby() {
+					var speciesContainer = document.getElementById("species");
+					var esc = encodeURIComponent;
+					var query = Object.keys(params)
+					.map(function(k) {return esc(k) + '=' + esc(params[k]);})
+					.join('&');
+					var nearResponse = await fetch(url +'?' + query);
+					const nearBirds = await nearResponse.json();
+					console.log(nearBirds);
+					for (var i = 0; i < nearBirds.length; i++) {
+						console.log('got ' + nearBirds.length + ' species nearby');
+						var op = document.createElement("option");
+						op.innerHTML = nearBirds[i].comName;
+						op.value = nearBirds[i].speciesCode;
+						op.ID = 'speciesOption';
+						speciesContainer.appendChild(op);	
+					};
+
+					//alphabetize the select list
+					var list, z, switching, b, shouldSwitch;
+					list = document.getElementById("species");
+					switching = true;
+					// Make a loop that will continue until	no switching has been done
+					while (switching) {
+						//start by saying: no switching is done
+						switching = false;
+						b = list.getElementsByTagName("option");
+						//loop through all list items
+						for (z = 0; z < (b.length - 1); z++) {
+							//start by saying there should be no switching:
+							shouldSwitch = false;
+							// Check if the next item should switch place with the current item
+							if (b[z].innerHTML.toLowerCase() > b[z + 1].innerHTML.toLowerCase()) {
+								//if next item is alphabetically lower than current item, mark as a switch and break the loop
+								shouldSwitch = true;
+								break;
+							}
+						}
+						if (shouldSwitch) {
+						//if a switch has been marked, make the switch	and mark the switch as done
+							b[z].parentNode.insertBefore(b[z + 1], b[z]);
+							switching = true;
+						}
+					}
+				}	
+			getNearby();
+
 			});
-			
+
 		} else {
 			console.log('location bad');
 		};
 
+
+		
+		
+
+		
 		//get ebirds APi info on button click
 		async function getBirds() {
 			//get value from species selector
@@ -129,11 +188,11 @@
 
 			//bang the url & params against the ebird api and add results to table rows
 			var esc = encodeURIComponent;
-				var query = Object.keys(params)
-				.map(function(k) {return esc(k) + '=' + esc(params[k]);})
-				.join('&');
-				url = 'https://api.ebird.org/v2/data/obs/geo/recent/' + selectValue + '?&' + query;
-			const response = await fetch(url);
+			var query = Object.keys(params)
+			.map(function(k) {return esc(k) + '=' + esc(params[k]);})
+			.join('&');
+			speciesUrl = url + selectValue + '?&' + query;
+			const response = await fetch(speciesUrl);
 			const birds = await response.json();
 			console.log(birds);
 			for (var i = 0; i < birds.length; i++) {
