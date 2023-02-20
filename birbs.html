@@ -27,11 +27,13 @@
 			background-color: cadetblue;
 			color: antiquewhite;
 		}
-		#species {
+		#species,#hotspot {
 			width: 50%;
 		}
-		#selector {
+		.selector {
 			width: 450px;
+			margin-right: 18px;
+			margin-bottom: 18px;
 			background-color: #fbeee0;
 			border: 2px solid #422800;
 			border-radius: 30px;
@@ -41,7 +43,7 @@
 			padding: 0 18px;
 			line-height: 50px;
 		}
-		#selectorId {
+		.selectorId {
 			font-family: Arial, Helvetica, sans-serif;
 			font-weight: 600;
 			font-size: 18px;
@@ -61,7 +63,8 @@
 			font-weight: 600;
 			font-size: 18px;
 			padding: 0 18px;
-			margin-left: 18px;
+			margin-right: 18px;
+			margin-bottom: 18px;
 			line-height: 50px;
 			text-align: center;
 			text-decoration: none;
@@ -90,17 +93,32 @@
 </head>
 <body>
 	<div id="birdmap"></div> <br />
+	<div id="birds">
+		<div class="selector">
+			<label class="selectorId" for="species">Choose bird species:</label>
+			<select name="species" id="species">
+				<option></option>
+			</select>
+		</div>
+		
+		<button class="btn" id="getBirds" onclick="getBirds()">Get them birbs!</button>
 
-	<div id="selector">
-		<label id="selectorId" for="species">Choose bird species:</label>
-		<select name="species" id="species"></select>
+		<button class="btn" id="reMap" onclick="mymap.setView([params.lat, params.lng],10)">Re-center Map</button>
+
+		<button class="btn" id="image" onclick="imgSearch()">Image Search</button>
 	</div>
-	
-	<button class="btn" id="getBirds" onclick="getBirds()">Get them birbs!</button>
+	<div id="hotspots">
+		<div class="selector">
+			<label class="selectorId" for="hotspot">Choose hotspot:</label>
+			<select name="hotspot" id="hotspot">
+				<option></option>
+			</select>
+		</div>
+		
+		<button class="btn" id="showHotSpots" onclick="showHotSpot()">Show hotspots</button>
 
-	<button class="btn" id="reMap" onclick="mymap.setView([params.lat, params.lng],10)">Re-center Map</button>
-
-	<button class="btn" id="image" onclick="imgSearch()">Image Search</button><br /><br />	
+		<button class="btn" id="selectHotSpots" onclick="imgSearch()">Select hotspot</button>
+	</div>
 
 	<table id="birbs">
 		<tr id="birdRow"></tr>
@@ -113,9 +131,13 @@
 			lat: '',
 			lng: ''
 		};
+		var hotSpotParams = {
+			fmt: 'json',
+		}
 
-		//ebird API url minus query parameters
-		var url = 'https://api.ebird.org/v2/data/obs/geo/recent/';
+		//ebird recent observations by species API url base
+		var obsUrl = 'https://api.ebird.org/v2/data/obs/geo/recent/';
+		var hotSpotUrl = 'https://api.ebird.org/v2/ref/hotspot/geo?';
 
 		//empty nearby sightings array, not currently used but it seems like it will be more efficient to load json into arrary and alphabetize there some day...
 		var nearMe = [];
@@ -127,12 +149,24 @@
 		const tiles = L.tileLayer(tileUrl,{attribution});
 		tiles.addTo(mymap);
 		
-		//create marker group for birds, enables easy clearing of the canvas when changing species
+		//create marker group for birds & hotspots, enables easy clearing of the canvas when changing species
 		var birdMarkers = L.featureGroup();
+		var hotSpotMarkers = L.featureGroup();
 
 		//bird icon for Leaflet markers
 		var birdIcon = L.icon({
 			iconUrl: './293092.png',
+			shadowUrl: '',
+			iconSize:     [45, 45], // size of the icon
+			shadowSize:   [50, 64], // size of the shadow
+			iconAnchor:   [27, 27], // point of the icon which will correspond to marker's location
+			shadowAnchor: [4, 62],  // the same for the shadow
+			popupAnchor:  [-3, -26] // point from which the popup should open relative to the iconAnchor
+		});
+
+		//hotspot icon for Leaflet markers
+		var hotSpotIcon = L.icon({
+			iconUrl: './789468.png',
 			shadowUrl: '',
 			iconSize:     [45, 45], // size of the icon
 			shadowSize:   [50, 64], // size of the shadow
@@ -155,7 +189,19 @@
 		//create user location as const for cleaner updating of location using myMarker.setLatLng()
 		const myMarker = L.marker([0, 0], {icon: myIcon}).addTo(mymap).bindPopup("<b>My Location</b><br />",params.lat,params.lng);
 
-		//check if browser suppots geolocation, then get location and update params & url, and recenter map on your location
+
+		//clear any bird icons, hotspot icons, or table rows that are already on the screen
+		function clearMap() { 
+			var birdsContainer = document.getElementById("birbs");
+			var rowCount = birdsContainer.rows.length;
+			for (var i = rowCount - 1; i > 0; i--) {
+				birdsContainer.deleteRow(i);
+			};
+			birdMarkers.clearLayers();
+			hotSpotMarkers.clearLayers();
+		}
+
+		//check if browser supports geolocation, then get location and update params & url, and recenter map on your location
 		if ('geolocation' in navigator) {
 			console.log('location good');
 			navigator.geolocation.getCurrentPosition(function(position)
@@ -175,7 +221,7 @@
 					var query = Object.keys(params)
 					.map(function(k) {return esc(k) + '=' + esc(params[k]);})
 					.join('&');
-					var nearResponse = await fetch(url +'?' + query);
+					var nearResponse = await fetch(obsUrl +'?' + query);
 					const nearBirds = await nearResponse.json();
 					for (var i = 0; i < nearBirds.length; i++) {
 						console.log('got ' + nearBirds.length + ' species nearby');
@@ -206,8 +252,27 @@
 						}
 					}
 				}
-			//do the dang ol' thing
-			getNearby();
+				//do the dang ol' thing
+				getNearby();
+				
+				//fetch list of nearby hotspots from ebird API
+				async function getHotSpot() {
+					var hotSpotContainer = document.getElementById("hotspot");
+					var esc = encodeURIComponent;
+					var query = Object.keys(params)
+					.map(function(k) {return esc(k) + '=' + esc(params[k]);})
+					.join('&');
+					var hotSpotResponse = await fetch(hotSpotUrl + query + '&fmt=json');
+					const nearHotSpot = await hotSpotResponse.json();
+					for (var i = 0; i < nearHotSpot.length; i++) {
+						console.log('got ' + nearHotSpot.length + ' hotspots nearby');
+						var op = document.createElement("option");
+						op.innerHTML = nearHotSpot[i].locName;
+						op.value = nearHotSpot[i].locId;
+						hotSpotContainer.appendChild(op);	
+					};
+				}
+				getHotSpot();
 
 			});
 
@@ -224,20 +289,16 @@
 			var selectText = e.options[e.selectedIndex].text;
 			console.log(selectText + ' sent to ebird API');
 
-			//clear any bird icons or table rows that are already on the screen
+			//clear any bird icons, hotspot icons, or table rows that are already on the screen
 			var birdsContainer = document.getElementById("birbs");
-			var rowCount = birdsContainer.rows.length;
-			for (var i = rowCount - 1; i > 0; i--) {
-				birdsContainer.deleteRow(i);
-			};
-			birdMarkers.clearLayers();
+			clearMap();
 
 			//bang the url & params against the ebird api and add results to table rows
 			var esc = encodeURIComponent;
 			var query = Object.keys(params)
 			.map(function(k) {return esc(k) + '=' + esc(params[k]);})
 			.join('&');
-			speciesUrl = url + selectValue + '?&' + query;
+			speciesUrl = obsUrl + selectValue + '?&' + query;
 			const response = await fetch(speciesUrl);
 			const birds = await response.json();
 			console.log(birds);
@@ -266,6 +327,24 @@
 			var speciesText = g.options[g.selectedIndex].text;
 			var searchUrl = 'https://www.google.com/search?q=' + speciesText + '&tbm=isch';
 			window.open(searchUrl, '_blank');
+		}
+
+		//show hotspot locations on map
+		async function showHotSpot() {
+			clearMap();
+			mymap.setView([params.lat, params.lng],11);
+			var hotSpotContainer = document.getElementById("hotspot");
+			var esc = encodeURIComponent;
+			var query = Object.keys(params)
+			.map(function(k) {return esc(k) + '=' + esc(params[k]);})
+			.join('&');
+			var hotSpotResponse = await fetch(hotSpotUrl + query + '&fmt=json');
+			const nearHotSpot = await hotSpotResponse.json();
+			for (var i = 0; i < nearHotSpot.length; i++) {
+				var spotInfo = '<b>' + nearHotSpot[i].locName + '</b><br />Show me da birbs!';
+				L.marker([nearHotSpot[i].lat,nearHotSpot[i].lng], {icon:hotSpotIcon}).addTo(hotSpotMarkers).bindPopup(spotInfo);
+				hotSpotMarkers.addTo(mymap);
+			}
 		}
 	</script>
 
