@@ -12,7 +12,8 @@
 	<link rel="icon" type="image/x-icon" href=".\293092.png">
 	<style>
 		#birdmap { /* Leafelet requires a starting height for maps or will assume 0 */
-			height:450px;
+			height: 450px;
+			border-radius: 15px;
 		}
 		#birbs {
 			width: 100%;
@@ -27,7 +28,62 @@
 			color: antiquewhite;
 		}
 		#species {
-			width: 25%;
+			width: 50%;
+		}
+		#selector {
+			width: 450px;
+			background-color: #fbeee0;
+			border: 2px solid #422800;
+			border-radius: 30px;
+			box-shadow: #422800 4px 4px 0 0;
+			color: #422800;
+			display: inline-block;
+			padding: 0 18px;
+			line-height: 50px;
+		}
+		#selectorId {
+			font-family: Arial, Helvetica, sans-serif;
+			font-weight: 600;
+			font-size: 18px;
+			text-align: left;
+			text-decoration: none;
+		}
+		.btn {
+			width: 200px;
+			background-color: #fbeee0;
+			border: 2px solid #422800;
+			border-radius: 30px;
+			box-shadow: #422800 4px 4px 0 0;
+			color: #422800;
+			cursor: pointer;
+			display: inline-block;
+			font-family: Arial, Helvetica, sans-serif;
+			font-weight: 600;
+			font-size: 18px;
+			padding: 0 18px;
+			margin-left: 18px;
+			line-height: 50px;
+			text-align: center;
+			text-decoration: none;
+			user-select: none;
+			-webkit-user-select: none;
+			touch-action: manipulation;
+		}
+
+		.btn:hover {
+			background-color: #fff;
+		}
+
+		.btn:active {
+			box-shadow: #422800 2px 2px 0 0;
+			transform: translate(2px, 2px);
+		}
+
+		@media (min-width: 768px) {
+			.btn {
+				min-width: 120px;
+				padding: 0 25px;
+			}
 		}
 		
 	</style>
@@ -35,15 +91,17 @@
 <body>
 	<div id="birdmap"></div> <br />
 
-	<label for="species">Choose bird species:</label>
-	<select name="species" id="species">
-
-	</select>
+	<div id="selector">
+		<label id="selectorId" for="species">Choose bird species:</label>
+		<select name="species" id="species"></select>
+	</div>
 	
-	<button id="getBirds" onclick="getBirds()">Get them birbs!</button>
+	<button class="btn" id="getBirds" onclick="getBirds()">Get them birbs!</button>
 
-	<button id="reMap" onclick="mymap.setView([params.lat, params.lng],10)">Re-center map</button>
-	
+	<button class="btn" id="reMap" onclick="mymap.setView([params.lat, params.lng],10)">Re-center Map</button>
+
+	<button class="btn" id="image" onclick="imgSearch()">Image Search</button><br /><br />	
+
 	<table id="birbs">
 		<tr id="birdRow"></tr>
 	</table>
@@ -54,16 +112,15 @@
 			key: 'eo0j01ma9l9e',
 			lat: '',
 			lng: ''
-			// snoowl1, baleag, coohaw
 		};
 
-		//ebird API url
+		//ebird API url minus query parameters
 		var url = 'https://api.ebird.org/v2/data/obs/geo/recent/';
 
-		//empty nearby sightings array
+		//empty nearby sightings array, not currently used but it seems like it will be more efficient to load json into arrary and alphabetize there some day...
 		var nearMe = [];
 
-		//initialize map for Leaflet
+		//initialize map for Leaflet at 0,0
 		const mymap = L.map('birdmap').setView([0, 0], 9);
 		const attribution = '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap';
 		const tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -111,7 +168,7 @@
 				mymap.setView([params.lat, params.lng],13);
 				myMarker.setLatLng([params.lat, params.lng]);	
 				
-				//fetch recent nearby sightings and populate species select options
+				//fetch recent nearby sightings and create select options for each species, append to parent select tag
 				async function getNearby() {
 					var speciesContainer = document.getElementById("species");
 					var esc = encodeURIComponent;
@@ -120,7 +177,6 @@
 					.join('&');
 					var nearResponse = await fetch(url +'?' + query);
 					const nearBirds = await nearResponse.json();
-					console.log(nearBirds);
 					for (var i = 0; i < nearBirds.length; i++) {
 						console.log('got ' + nearBirds.length + ' species nearby');
 						var op = document.createElement("option");
@@ -130,33 +186,27 @@
 						speciesContainer.appendChild(op);	
 					};
 
-					//alphabetize the select list
+					//alphabetize the select options list
 					var list, z, switching, b, shouldSwitch;
 					list = document.getElementById("species");
 					switching = true;
-					// Make a loop that will continue until	no switching has been done
 					while (switching) {
-						//start by saying: no switching is done
 						switching = false;
 						b = list.getElementsByTagName("option");
-						//loop through all list items
 						for (z = 0; z < (b.length - 1); z++) {
-							//start by saying there should be no switching:
 							shouldSwitch = false;
-							// Check if the next item should switch place with the current item
 							if (b[z].innerHTML.toLowerCase() > b[z + 1].innerHTML.toLowerCase()) {
-								//if next item is alphabetically lower than current item, mark as a switch and break the loop
 								shouldSwitch = true;
 								break;
 							}
 						}
 						if (shouldSwitch) {
-						//if a switch has been marked, make the switch	and mark the switch as done
 							b[z].parentNode.insertBefore(b[z + 1], b[z]);
 							switching = true;
 						}
 					}
-				}	
+				}
+			//do the dang ol' thing
 			getNearby();
 
 			});
@@ -165,18 +215,14 @@
 			console.log('location bad');
 		};
 
-
-		
-		
-
 		
 		//get ebirds APi info on button click
 		async function getBirds() {
-			//get value from species selector
+			//get species code from species selector
 			var e = document.getElementById("species");
 			var selectValue = e.value;
 			var selectText = e.options[e.selectedIndex].text;
-			console.log(selectValue);
+			console.log(selectText + ' sent to ebird API');
 
 			//clear any bird icons or table rows that are already on the screen
 			var birdsContainer = document.getElementById("birbs");
@@ -213,6 +259,14 @@
 			mymap.setView([params.lat, params.lng],10);
 		};
 
+		//open an image search with the selected bird on button click
+		function imgSearch() {
+			var g = document.getElementById("species");
+			var speciesValue = g.value;
+			var speciesText = g.options[g.selectedIndex].text;
+			var searchUrl = 'https://www.google.com/search?q=' + speciesText + '&tbm=isch';
+			window.open(searchUrl, '_blank');
+		}
 	</script>
 
 </body>
