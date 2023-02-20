@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+	<title>birbs!</title>
+    <link rel="icon" type="image/x-icon" href=".\293092.png">
+	<style>
+        #welcome {
+			width: 500px;
+            position: absolute;
+            left: 50%;
+            margin-left: -270px;
+            margin-bottom: 18px;
+            margin-top: 50px;
+			background-color: #fbeee0;
+			border: 2px solid #422800;
+			border-radius: 30px;
+			box-shadow: #422800 4px 4px 0 0;
+			color: #422800;
+			display: inline-block;
+			padding: 0 18px;
+			line-height: 30px;
+            font-family: Arial, Helvetica, sans-serif;
+			font-weight: 600;
+			font-size: 18px;
+			text-align: center;
+			text-decoration: none;
+        }
+        #license {
+            font-size: 16px;
+        }
+        .btn {
+			width: 260px;
+			background-color: #b1ccaa;
+			border: 2px solid #384d32;
+			border-radius: 30px;
+			box-shadow: #384d32 4px 4px 0 0;
+			color: #384d32;
+			cursor: pointer;
+			display: inline-block;
+			font-family: Arial, Helvetica, sans-serif;
+			font-weight: 600;
+			font-size: 16px;
+			padding: 0 18px;
+			margin-right: 18px;
+            margin-top: 18px;
+			margin-bottom: 38px;
+			line-height: 50px;
+			text-align: center;
+            text-decoration: none;
+			user-select: none;
+			-webkit-user-select: none;
+			touch-action: manipulation;
+		}
+
+		.btn:hover {
+			background-color: #fff;
+		}
+
+		.btn:active {
+			box-shadow: #422800 2px 2px 0 0;
+			transform: translate(2px, 2px);
+		}
+        a{
+            text-decoration: none;
+            color: #384d32;
+        }
+    </style>
+</head>
+<body>
+    <div id="welcome">
+        <h1>birdr.</h1>
+        <p>Welcome to birdr! This site is an experiement that combines data from The Cornell Lab of Ornithology's <a href="https://ebird.org/home" target="_blank">eBird</a> 
+            platform with the open-source mapping tool <a href="https://leafletjs.com/" target="_blank">Leaflet.js</a> to give users some spatial awareness when planning their 
+            next outing.</p><br />
+        <p id="license">This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of 
+            MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License <a href="./gpl-3.0.txt" target="_blank">here</a> for more details.</p>
+        <button class="btn" onclick="window.location.href='./birbs.html';"><b>Got it, take me to the birbs!</b></button>
+    </div>
+</body>

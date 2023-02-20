@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8" />
-	<title>Birbs!</title>
+	<title>birbs!</title>
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
     	integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
     	crossorigin=""/>
@@ -13,7 +13,10 @@
 	<style>
 		#birdmap { /* Leafelet requires a starting height for maps or will assume 0 */
 			height: 450px;
-			border-radius: 15px;
+			border: 2px solid #422800;
+			border-radius: 30px;
+			box-shadow: #422800 4px 4px 0 0;
+			color: #422800;
 		}
 		#birbs {
 			width: 100%;
@@ -310,9 +313,9 @@
 			};
 
 			//drop a bird icon on each location
-			for (var j = 0; j < birds.length; j++) {
-				var popInfo = '<b>' + birds[j].comName + '</b><br />' + birds[j].obsDt;
-				L.marker([birds[j].lat,birds[j].lng], {icon:birdIcon}).addTo(birdMarkers).bindPopup(popInfo);
+			for (var i = 0; i < birds.length; i++) {
+				var popInfo = '<b>' + birds[i].comName + '</b><br />' + birds[i].obsDt + '<br />' + birds[i].locName;
+				L.marker([birds[i].lat,birds[i].lng], {icon:birdIcon}).addTo(birdMarkers).bindPopup(popInfo);
 				birdMarkers.addTo(mymap);
 			};
 
