@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-	<meta charset="utf-8" />
+	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 	<title>birbs!</title>
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
     	integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
@@ -11,9 +11,12 @@
 		crossorigin=""></script>
 	<link rel="icon" type="image/x-icon" href=".\293092.png">
 	<style>
+		#main {
+			height: 100%;
+			
+		}
 		#birdmap { /* Leafelet requires a starting height for maps or will assume 0 */
-			height: 650px;
-			margin-bottom: 10px;
+			height: 55vh;
 			border: 2px solid #422800;
 			border-radius: 30px;
 			box-shadow: #422800 4px 4px 0 0;
@@ -21,62 +24,92 @@
 		}
 		#birbs {
 			width: 100%;
+			margin-top: 5%;
 			border: 1px solid;
 			border-collapse: collapse;
 		}
-		th, td { 
+
+		tr, td { 
 			padding-left: 5px;
 		}
 		tr:hover {
 			background-color: cadetblue;
 			color: antiquewhite;
 		}
-		#species,#hotspot {
-			width: 50%;
+		.flex-container {
+			height: 30vh;
+			width: 100%;
+			display: flex;
+			flex-flow: row wrap;
+			align-items: start;
+			justify-content: left;
 		}
-		.selector {
-			width: 450px;
-			margin-right: 18px;
-			margin-bottom: 26px;
-			background-color: #fbeee0;
-			border: 2px solid #422800;
-			border-radius: 30px;
-			box-shadow: #422800 4px 4px 0 0;
-			color: #422800;
-			display: inline-block;
-			padding: 0 18px;
-			line-height: 50px;
-		}
-		.selectorId {
+		#selector {
+			margin-left: 5%;
 			font-family: Arial, Helvetica, sans-serif;
 			font-weight: 600;
-			font-size: 18px;
+			font-size: 1em;
 			text-align: left;
 			text-decoration: none;
 		}
+		#species {
+			width: 50%;
+		}
 		.btn {
-			width: 200px;
+			flex: 1;
+			min-width: 120px;
+			max-width: 20%;
+			height: 30%;
+			margin: 1%;
+			margin-bottom: 1.5%;
 			background-color: #fbeee0;
 			border: 2px solid #422800;
 			border-radius: 30px;
 			box-shadow: #422800 4px 4px 0 0;
 			color: #422800;
 			cursor: pointer;
-			display: inline-block;
 			font-family: Arial, Helvetica, sans-serif;
 			font-weight: 600;
-			font-size: 18px;
-			padding: 0 18px;
-			margin-right: 18px;
-			margin-bottom: 26px;
-			line-height: 50px;
+			font-size: 1.1em;
 			text-align: center;
 			text-decoration: none;
 			user-select: none;
 			-webkit-user-select: none;
 			touch-action: manipulation;
 		}
-
+		.ready { 
+			flex: 1;
+			min-width: 120px;
+			max-width: 20%;
+			height: 30%;
+			margin: 1%;
+			margin-bottom: 1.5%;
+			background-color: #cbe7c4;
+			border: 2px solid #384d32;
+			border-radius: 30px;
+			box-shadow: #422800 4px 4px 0 0;
+			color: #384d32;
+			cursor: pointer;
+			font-family: Arial, Helvetica, sans-serif;
+			font-weight: 600;
+			font-size: 1.1em;
+			text-align: center;
+			text-decoration: none;
+			user-select: none;
+			-webkit-user-select: none;
+			touch-action: manipulation;
+		}
+		.btn:first-child {
+			flex: 3;
+			max-width: 95%;
+			display: flex;
+			align-items: center;
+			justify-content: left;
+			flex: 3;
+			min-width: 400px;
+			text-align: left;
+			cursor: default;
+		}
 		.btn:hover {
 			background-color: #fff;
 		}
@@ -85,42 +118,60 @@
 			box-shadow: #422800 2px 2px 0 0;
 			transform: translate(2px, 2px);
 		}
-
-		@media (min-width: 768px) {
-			.btn {
-				min-width: 120px;
-				padding: 0 25px;
-			}
-		}
-		
+		a{
+            text-decoration: none;
+            color: #578f45;
+        }
+		/*footer{
+			position: absolute;
+			bottom: 0;
+			clear: both;
+			display: flex;
+			justify-content: center;
+			font-family: Arial, Helvetica, sans-serif;
+			font-weight: 600;
+			font-size: .4em;
+			color: #7e7e7d;
+		}*/
 	</style>
 </head>
 <body>
-	<div id="birdmap"></div> <br />
-	<div id="birds">
-		<div class="selector">
-			<label class="selectorId" for="species">Choose bird species:</label>
-			<select name="species" id="species">
-				<option></option>
-			</select>
+	<div id="main">
+		<div id="birdmap"></div> <br />
+		<div class="flex-container">
+			<div class="btn">
+				<label id="selector" for="species">Choose bird species:
+					<select name="species" id="species" oninput="makeActive()">
+						<option></option>
+					</select>
+				</label>
+			</div>
+			<button class="btn" id="getBirds" onclick="getBirds()">Get them birbs!</button>
+
+			<button class="btn" id="reMap" onclick="mymap.setView([params.lat, params.lng],10)">Re-center Map</button>
+
+			<button class="btn" id="image" onclick="imgSearch()">Image Search</button>
+			
+			<button class="btn" id="showHotSpots" onclick="showHotSpot()">Show hotspots</button>
+
+			<button class="btn" id="selectHotSpots" onclick="hotSpotMarkers.clearLayers();">Hide hotspots</button>
 		</div>
-		
-		<button class="btn" id="getBirds" onclick="getBirds()">Get them birbs!</button><br />
-
-		<button class="btn" id="reMap" onclick="mymap.setView([params.lat, params.lng],10)">Re-center Map</button>
-
-		<button class="btn" id="image" onclick="imgSearch()">Image Search</button>
-		
-		<button class="btn" id="showHotSpots" onclick="showHotSpot()">Show hotspots</button>
-
-		<button class="btn" id="selectHotSpots" onclick="hotSpotMarkers.clearLayers();">Hide hotspots</button>
 	</div>
-
 	<table id="birbs">
 		<tr id="birdRow"></tr>
 	</table>
-
+	<!--<footer>
+		<p width="60%">&#169; 2023 Andy Klinger | Leaflet.js &#169; <a href="https://agafonkin.com" target="_blank">Volodymyr Agafonkin</a> | Maps &#169; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors | Data &#169; <a href="https://www.ebird.org" target="_blank">Cornell University</a>
+		</p>
+	</footer>-->
 	<script>
+		//highlight getBirds button green to prompt user once they have selected a bird
+		function makeActive() {
+			console.log('changed button class');
+			document.getElementById('getBirds').className = "ready";
+		}
+					
+		
 		//url parameters for ebird API
 		var params = {
 			key: 'eo0j01ma9l9e',
@@ -222,8 +273,8 @@
 					.join('&');
 					var nearResponse = await fetch(obsUrl +'/?' + query);
 					const nearBirds = await nearResponse.json();
+					console.log('got ' + nearBirds.length + ' species nearby');
 					for (var i = 0; i < nearBirds.length; i++) {
-						console.log('got ' + nearBirds.length + ' species nearby');
 						var op = document.createElement("option");
 						op.innerHTML = nearBirds[i].comName;
 						op.value = nearBirds[i].speciesCode;
@@ -253,25 +304,6 @@
 				}
 				//do the dang ol' thing
 				getNearby();
-				
-				//fetch list of nearby hotspots from ebird API
-				/*async function getHotSpot() {
-					var hotSpotContainer = document.getElementById("hotspot");
-					var esc = encodeURIComponent;
-					var query = Object.keys(params)
-					.map(function(k) {return esc(k) + '=' + esc(params[k]);})
-					.join('&');
-					var hotSpotResponse = await fetch(hotSpotUrl + query + '&fmt=json');
-					const nearHotSpot = await hotSpotResponse.json();
-					for (var i = 0; i < nearHotSpot.length; i++) {
-						console.log('got ' + nearHotSpot.length + ' hotspots nearby');
-						var op = document.createElement("option");
-						op.innerHTML = nearHotSpot[i].locName;
-						op.value = nearHotSpot[i].locId;
-						hotSpotContainer.appendChild(op);	
-					};
-				}
-				getHotSpot();*/
 
 			});
 
@@ -282,6 +314,9 @@
 		
 		//get ebirds APi info on button click
 		async function getBirds() {
+			//change button color back to base
+			console.log('changed button class back to normal');
+			document.getElementById('getBirds').className = "btn";
 			//get species code from species selector
 			var e = document.getElementById("species");
 			var selectValue = e.value;
@@ -300,9 +335,8 @@
 			speciesUrl = obsUrl + '/' + selectValue + '?&' + query;
 			const response = await fetch(speciesUrl);
 			const birds = await response.json();
-			console.log(birds);
+			console.log('got ' + birds.length + ' bird records');
 			for (var i = 0; i < birds.length; i++) {
-				console.log('got ' + birds.length + ' bird records');
 				var row = document.createElement("tr");
 				row.innerHTML = '<td id="birdRow">' + birds[i].comName + '</td><td>' + birds[i].obsDt + '</td><td>' + birds[i].locName + '</td>';
 				birdsContainer.appendChild(row);	
@@ -329,36 +363,42 @@
 		}
 
 		//show hotspot locations on map
+		var nearHotSpot = '';
 		async function showHotSpot() {
 			mymap.setView([params.lat, params.lng],11);
-			var hotSpotContainer = document.getElementById("hotspot");
 			var esc = encodeURIComponent;
 			var query = Object.keys(params)
 			.map(function(k) {return esc(k) + '=' + esc(params[k]);})
 			.join('&');
 			var hotSpotResponse = await fetch(hotSpotUrl + query + '&fmt=json');
-			var nearHotSpot = await hotSpotResponse.json();
+			nearHotSpot = await hotSpotResponse.json();
 			console.log('got ' + nearHotSpot.length + ' hotspots nearby');
 			for (var i = 0; i < nearHotSpot.length; i++) {
 				//create localized observation URL with hotspot lat & lng
 				var hotSpotHref = obsUrl + '?key=' + hotSpotParams.key + '&lat=' + nearHotSpot[i].lat + '&lng=' + nearHotSpot[i].lng;
 				var a = document.createElement("a");
 				a.setAttribute("href", hotSpotHref);
-
-				var spotInfo = '<b>' + nearHotSpot[i].locName + '</b><br /><a href='+a+'>Show me tha birbs!</a>';
+				//button to get & display sightings near selected hotspot using hotspotHref
+	
+				var hotSpotButton = document.createElement("button");
+				hotSpotButton.value="View nearby birds";
+				//var spotInfo = '<b>' + nearHotSpot[i].locName + '</b><br /><a href='+a+'>Show me tha birbs!</a>';
+				var spotInfo = '<b id="hotspot'+[i]+'">' + nearHotSpot[i].locName + '</b><br /><button onclick="hotSpotBirds('+nearHotSpot[i].lat+','+nearHotSpot[i].lng+');">test</button>';
+				
 				L.marker([nearHotSpot[i].lat,nearHotSpot[i].lng], {icon:hotSpotIcon}).addTo(hotSpotMarkers).bindPopup(spotInfo);
 				hotSpotMarkers.addTo(mymap);
+				
 			}
 			
 		}
-
 		//called when user taps hotspot popup to show observations near that location
 		async function hotSpotTap() {
-				console.log(hotSpotParams);
+			console.log(nearHotSpot);
 		}
+		
 
 		//show bird sightings near hotspot
-		async function hotSpotBirds() {
+		async function hotSpotBirds(x,y) {
 
 			//clear any bird icons, hotspot icons, or table rows that are already on the screen
 			var birdsContainer = document.getElementById("birbs");
@@ -369,11 +409,10 @@
 			var query = Object.keys(params)
 			.map(function(k) {return esc(k) + '=' + esc(params[k]);})
 			.join('&');
-			const response = await fetch(obsUrl + '?' + query);
+			const response = await fetch('https://api.ebird.org/v2/data/obs/geo/recent?key=eo0j01ma9l9e&dist=5&lat=' + x + '&lng=' + y);
 			const birds = await response.json();
-			console.log(birds);
+			console.log('got ' + birds.length + ' bird records');
 			for (var i = 0; i < birds.length; i++) {
-				console.log('got ' + birds.length + ' bird records');
 				var row = document.createElement("tr");
 				row.innerHTML = '<td id="birdRow">' + birds[i].comName + '</td><td>' + birds[i].obsDt + '</td><td>' + birds[i].locName + '</td>';
 				birdsContainer.appendChild(row);	
