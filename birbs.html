@@ -383,7 +383,7 @@
 				var hotSpotButton = document.createElement("button");
 				hotSpotButton.value="View nearby birds";
 				//var spotInfo = '<b>' + nearHotSpot[i].locName + '</b><br /><a href='+a+'>Show me tha birbs!</a>';
-				var spotInfo = '<b id="hotspot'+[i]+'">' + nearHotSpot[i].locName + '</b><br /><button onclick="hotSpotBirds('+nearHotSpot[i].lat+','+nearHotSpot[i].lng+');">test</button>';
+				var spotInfo = '<b id="hotspot'+[i]+'">' + nearHotSpot[i].locName + '</b><br /><button onclick="hotSpotBirds('+nearHotSpot[i].lat+','+nearHotSpot[i].lng+');">Show nearby birds</button>';
 				
 				L.marker([nearHotSpot[i].lat,nearHotSpot[i].lng], {icon:hotSpotIcon}).addTo(hotSpotMarkers).bindPopup(spotInfo);
 				hotSpotMarkers.addTo(mymap);
@@ -391,13 +391,9 @@
 			}
 			
 		}
-		//called when user taps hotspot popup to show observations near that location
-		async function hotSpotTap() {
-			console.log(nearHotSpot);
-		}
 		
 
-		//show bird sightings near hotspot
+		//show bird sightings near hotspot when user taps button
 		async function hotSpotBirds(x,y) {
 
 			//clear any bird icons, hotspot icons, or table rows that are already on the screen
