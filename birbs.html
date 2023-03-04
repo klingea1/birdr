@@ -165,13 +165,12 @@
 		</p>
 	</footer>-->
 	<script>
-		//highlight getBirds button green to prompt user once they have selected a bird
+		//highlight getBirds button green to prompt user action once they have selected a bird
 		function makeActive() {
 			console.log('changed button class');
 			document.getElementById('getBirds').className = "ready";
 		}
 					
-		
 		//url parameters for ebird API
 		var params = {
 			key: 'eo0j01ma9l9e',
@@ -181,7 +180,8 @@
 		var hotSpotParams = {
 			key: 'eo0j01ma9l9e',
 			lat: '',
-			lng: ''
+			lng: '',
+			dist: '5'
 		}
 		
 		//ebird API url base
@@ -374,17 +374,15 @@
 			nearHotSpot = await hotSpotResponse.json();
 			console.log('got ' + nearHotSpot.length + ' hotspots nearby');
 			for (var i = 0; i < nearHotSpot.length; i++) {
-				//create localized observation URL with hotspot lat & lng
-				var hotSpotHref = obsUrl + '?key=' + hotSpotParams.key + '&lat=' + nearHotSpot[i].lat + '&lng=' + nearHotSpot[i].lng;
-				var a = document.createElement("a");
-				a.setAttribute("href", hotSpotHref);
-				//button to get & display sightings near selected hotspot using hotspotHref
-	
+				
+				//create button to call hotSpotBirds() with the selected hotspot's lat & lng
 				var hotSpotButton = document.createElement("button");
 				hotSpotButton.value="View nearby birds";
-				//var spotInfo = '<b>' + nearHotSpot[i].locName + '</b><br /><a href='+a+'>Show me tha birbs!</a>';
+
+				//fill out hotspot popup with info & append button
 				var spotInfo = '<b id="hotspot'+[i]+'">' + nearHotSpot[i].locName + '</b><br /><button onclick="hotSpotBirds('+nearHotSpot[i].lat+','+nearHotSpot[i].lng+');">Show nearby birds</button>';
 				
+				//drop a marker on each hotspot and bind a popup to it
 				L.marker([nearHotSpot[i].lat,nearHotSpot[i].lng], {icon:hotSpotIcon}).addTo(hotSpotMarkers).bindPopup(spotInfo);
 				hotSpotMarkers.addTo(mymap);
 				
@@ -399,13 +397,15 @@
 			//clear any bird icons, hotspot icons, or table rows that are already on the screen
 			var birdsContainer = document.getElementById("birbs");
 			clearMap();
+			hotSpotParams.lat= x ;
+			hotSpotParams.lng = y;
 
 			//bang the url & params against the ebird api and add results to table rows
 			var esc = encodeURIComponent;
-			var query = Object.keys(params)
-			.map(function(k) {return esc(k) + '=' + esc(params[k]);})
+			var query = Object.keys(hotSpotParams)
+			.map(function(k) {return esc(k) + '=' + esc(hotSpotParams[k]);})
 			.join('&');
-			const response = await fetch('https://api.ebird.org/v2/data/obs/geo/recent?key=eo0j01ma9l9e&dist=5&lat=' + x + '&lng=' + y);
+			const response = await fetch(obsUrl + '?' + query);
 			const birds = await response.json();
 			console.log('got ' + birds.length + ' bird records');
 			for (var i = 0; i < birds.length; i++) {
@@ -422,7 +422,7 @@
 			};
 
 			//re-center the map & set zoom appropriate to results when done
-			mymap.setView([params.lat, params.lng],10);
+			mymap.setView([hotSpotParams.lat, hotSpotParams.lng],12);
 		}
 
 		
