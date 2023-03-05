@@ -1,6 +1,14 @@
 <!doctype html>
 <html lang="en">
 <head>
+	<!-- Google tag (gtag.js) -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-V02CZ2NB53"></script>
+	<script>
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){dataLayer.push(arguments);}
+	gtag('js', new Date());
+	gtag('config', 'G-V02CZ2NB53');
+	</script>
 	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 	<title>birbs!</title>
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
@@ -11,57 +19,69 @@
 		crossorigin=""></script>
 	<link rel="icon" type="image/x-icon" href=".\293092.png">
 	<style>
+		body{
+			margin: 16px;
+		}
 		#main {
 			height: 100%;
-			
+			width:100%;
 		}
 		#birdmap { /* Leafelet requires a starting height for maps or will assume 0 */
-			height: 55vh;
+			height: 50vh;
+			width: 99%;
 			border: 2px solid #422800;
 			border-radius: 30px;
 			box-shadow: #422800 4px 4px 0 0;
 			color: #422800;
 		}
-		#birbs {
-			width: 100%;
-			margin-top: 5%;
-			border: 1px solid;
-			border-collapse: collapse;
-		}
-
-		tr, td { 
-			padding-left: 5px;
-		}
-		tr:hover {
-			background-color: cadetblue;
-			color: antiquewhite;
-		}
 		.flex-container {
-			height: 30vh;
-			width: 100%;
+			height: 40vh;
 			display: flex;
 			flex-flow: row wrap;
-			align-items: start;
-			justify-content: left;
+			align-items: flex-start;
+			align-content: flex-start;
+			justify-content: space-between;
 		}
-		#selector {
-			margin-left: 5%;
+		div.btn{
+			display:flex;
+			flex-flow: row wrap;
+			align-items: start;		
+			justify-content: space-between;
+			flex: 1;
+			max-width: 750px;
+			display: flex;
+			align-items: center;
+			justify-content: left;
+			min-width: 400px;
+			text-align: left;
+			cursor: default;
+		}
+		#selectLabel {
+			max-width: 45%;
+			margin-left: 4%;
 			font-family: Arial, Helvetica, sans-serif;
 			font-weight: 600;
 			font-size: 1em;
 			text-align: left;
 			text-decoration: none;
 		}
-		#species {
-			width: 50%;
+		#selectSpecies {
+			flex: 1;
+			max-width: 45%;
+			margin-left: 4%;
+			margin-right: 4%;
+		}
+		#buttonContainer{
+			display:flex;
+			flex-flow: row wrap;
+			align-items: start;		
+			justify-content: space-between;	
 		}
 		.btn {
-			flex: 1;
-			min-width: 120px;
-			max-width: 20%;
-			height: 30%;
-			margin: 1%;
-			margin-bottom: 1.5%;
+			min-width: 20%;
+			max-width:30%;
+			height: 10vh;
+			margin-bottom: 3%;
 			background-color: #fbeee0;
 			border: 2px solid #422800;
 			border-radius: 30px;
@@ -77,13 +97,18 @@
 			-webkit-user-select: none;
 			touch-action: manipulation;
 		}
+		.btn:hover {
+			background-color: #fff;
+		}
+		.btn:active {
+			box-shadow: #422800 2px 2px 0 0;
+			transform: translate(2px, 2px);
+		}
 		.ready { 
-			flex: 1;
-			min-width: 120px;
-			max-width: 20%;
-			height: 30%;
-			margin: 1%;
-			margin-bottom: 1.5%;
+			min-width: 20%;
+			max-width:30%;
+			height: 10vh;
+			margin-bottom: 3%;	
 			background-color: #cbe7c4;
 			border: 2px solid #384d32;
 			border-radius: 30px;
@@ -99,74 +124,71 @@
 			-webkit-user-select: none;
 			touch-action: manipulation;
 		}
-		.btn:first-child {
-			flex: 3;
-			max-width: 95%;
-			display: flex;
-			align-items: center;
-			justify-content: left;
-			flex: 3;
-			min-width: 400px;
-			text-align: left;
-			cursor: default;
+		#birbs {
+			width: 100%;
+			margin-top: 5%;
+			border: 1px solid;
+			border-collapse: collapse;
 		}
-		.btn:hover {
-			background-color: #fff;
+		tr, td, select { 
+			padding-left: 5px;
 		}
-
-		.btn:active {
-			box-shadow: #422800 2px 2px 0 0;
-			transform: translate(2px, 2px);
+		tr:hover {
+			background-color: cadetblue;
+			color: antiquewhite;
 		}
 		a{
             text-decoration: none;
             color: #578f45;
         }
-		/*footer{
-			position: absolute;
+		footer{
+			position: relative;
 			bottom: 0;
 			clear: both;
 			display: flex;
 			justify-content: center;
 			font-family: Arial, Helvetica, sans-serif;
 			font-weight: 600;
-			font-size: .4em;
+			font-size: .45em;
 			color: #7e7e7d;
-		}*/
+		}
 	</style>
 </head>
 <body>
 	<div id="main">
 		<div id="birdmap"></div> <br />
 		<div class="flex-container">
-			<div class="btn">
-				<label id="selector" for="species">Choose bird species:
-					<select name="species" id="species" oninput="makeActive()">
+			<div class="btn" id="selectContainer">
+				<label id="selectLabel" for="species">Choose bird species:</label>
+					<select name="species" id="selectSpecies" oninput="makeClassActive()">
 						<option></option>
 					</select>
-				</label>
 			</div>
-			<button class="btn" id="getBirds" onclick="getBirds()">Get them birbs!</button>
+			<div id="buttonContainer">
+				<button class="btn" id="getBirds" onclick="getBirds()">Get them birbs!</button>
 
-			<button class="btn" id="reMap" onclick="mymap.setView([params.lat, params.lng],10)">Re-center Map</button>
+				<button class="btn" id="reMap" onclick="mymap.setView([params.lat, params.lng],10)">Re-center Map</button>
 
-			<button class="btn" id="image" onclick="imgSearch()">Image Search</button>
-			
-			<button class="btn" id="showHotSpots" onclick="showHotSpot()">Show hotspots</button>
+				<button class="btn" id="image" onclick="imgSearch()">Image Search</button>
+				
+				<button class="btn" id="showHotSpots" onclick="showHotSpot()">Show hotspots</button>
 
-			<button class="btn" id="selectHotSpots" onclick="hotSpotMarkers.clearLayers();">Hide hotspots</button>
+				<button class="btn" id="selectHotSpots" onclick="hotSpotMarkers.clearLayers();">Hide hotspots</button>
+
+				<button class="btn" id="selectHotSpots" onclick="">Another Button</button>
+			</div>
 		</div>
 	</div>
 	<table id="birbs">
 		<tr id="birdRow"></tr>
 	</table>
-	<!--<footer>
+	<footer>
 		<p width="60%">&#169; 2023 Andy Klinger | Leaflet.js &#169; <a href="https://agafonkin.com" target="_blank">Volodymyr Agafonkin</a> | Maps &#169; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors | Data &#169; <a href="https://www.ebird.org" target="_blank">Cornell University</a>
 		</p>
-	</footer>-->
+	</footer>
 	<script>
 		//highlight getBirds button green to prompt user action once they have selected a bird
-		function makeActive() {
+		function makeClassActive() {
 			console.log('changed button class');
 			document.getElementById('getBirds').className = "ready";
 		}
@@ -266,7 +288,7 @@
 				
 				//fetch recent nearby sightings and create select options for each species, append to parent select tag
 				async function getNearby() {
-					var speciesContainer = document.getElementById("species");
+					var speciesContainer = document.getElementById("selectSpecies");
 					var esc = encodeURIComponent;
 					var query = Object.keys(params)
 					.map(function(k) {return esc(k) + '=' + esc(params[k]);})
@@ -284,7 +306,7 @@
 
 					//alphabetize the select options list
 					var list, z, switching, b, shouldSwitch;
-					list = document.getElementById("species");
+					list = document.getElementById("selectSpecies");
 					switching = true;
 					while (switching) {
 						switching = false;
@@ -318,7 +340,7 @@
 			console.log('changed button class back to normal');
 			document.getElementById('getBirds').className = "btn";
 			//get species code from species selector
-			var e = document.getElementById("species");
+			var e = document.getElementById("selectSpecies");
 			var selectValue = e.value;
 			var selectText = e.options[e.selectedIndex].text;
 			console.log(selectText + ' sent to ebird API');
@@ -355,7 +377,7 @@
 
 		//open an image search with the selected bird on button click
 		function imgSearch() {
-			var g = document.getElementById("species");
+			var g = document.getElementById("selectSpecies");
 			var speciesValue = g.value;
 			var speciesText = g.options[g.selectedIndex].text;
 			var searchUrl = 'https://www.google.com/search?q=' + speciesText + '&tbm=isch';
