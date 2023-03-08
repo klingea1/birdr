@@ -156,6 +156,7 @@
 			position: absolute;
 			bottom: 0;
 			width: 100%;
+			padding-top: 2rem;
 			height: 2.5rem;
 			text-align: center;
 			font-family: Arial, Helvetica, sans-serif;
@@ -172,7 +173,7 @@
 				justify-content: flex-start;
 			}
 			.btn, .ready {
-				font-size: 3vw;
+				font-size: 2.75vw;
 			}
 			footer { 
 				font-size: 12px;
@@ -197,13 +198,13 @@
 				<div class="wrapper">
 					<div><button class="btn" id="getBirds" onclick="getBirds()">Get them birbs!</button></div>
 					<div><button class="btn" id="reMap" onclick="mymap.setView([params.lat, params.lng],10)">Re-center Map</button></div>
-					<div><button class="btn" id="image" onclick="imgSearch()">Image Search</button></div>
+					<div><button class="btn" id="selectHotSpots" onclick="clearMap()">Clear Map</button></div>				
 				</div>
 
 				<div class="wrapper">
+					<div><button class="btn" id="image" onclick="imgSearch()">Image Search</button></div>
 					<div><button class="btn" id="showHotSpots" onclick="showHotSpot()">Show hotspots</button></div>
 					<div><button class="btn" id="selectHotSpots" onclick="hotSpotMarkers.clearLayers();">Hide hotspots</button></div>
-					<div><button class="btn" id="selectHotSpots" onclick="">Another Button</button></div>
 				</div>
 			</div>
 			<table id="birbs">
