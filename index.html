@@ -1,6 +1,12 @@
 <!doctype html>
 <html lang="en">
 <head>
+	<!-- Set the character encoding for this document, so that all characters within the UTF-8 space (such as emoji) are rendered correctly. -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<meta http-equiv="Expires" content="0" />
 	<!-- Google tag (gtag.js) -->
 	<script async src="https://www.googletagmanager.com/gtag/js?id=G-V02CZ2NB53"></script>
 	<script>
@@ -21,7 +27,9 @@
 			background-size: cover;
 		}
 		#main {
-			height: 100vh;
+			height: 90vh;
+			width: 90vw;
+			margin: auto;
 			display: flex;
 			justify-content: center;
 		}
@@ -29,7 +37,7 @@
 			width: 70%;
 			height: fit-content;
             margin-bottom: 18px;
-            margin-top: 50px;
+            margin-top: 5%;
 			background-color: rgba(251,238,224,.7);
 			border: 2px solid #422800;
 			border-radius: 30px;
@@ -56,8 +64,6 @@
 			font-weight: 300;
 			font-size: 1em;
 			padding: 0 18px;
-			margin-right: 18px;
-            margin-top: 18px;
 			margin-bottom: 38px;
 			line-height: 50px;
 			text-align: center;
@@ -80,7 +86,7 @@
             color: #578f45;
         }
 		footer{
-			position: relative;
+			position: absolute;
 			bottom: 0;
 			clear: both;
 			text-align: center;
@@ -90,8 +96,11 @@
 			color: #e0e0de;
 		}
 		@media only screen and (max-width: 800px) {
+			.welcomeBackground {
+				width: 90%;
+			}
 			p {
-				font-size: 20px;
+				font-size: 16px;
 			}
 			footer { 
 				font-size: 12px;
@@ -107,7 +116,7 @@
 				<h1>birdr.</h1>
 				<p>Welcome to birdr! This site is an experiment that combines data from The Cornell Lab of Ornithology's <a href="https://ebird.org/home" target="_blank">eBird</a> 
 					platform with the open-source mapping tool <a href="https://leafletjs.com/" target="_blank">Leaflet.js</a> to give users some spatial awareness when planning their 
-					next outing.</p><br />
+					next outing.</p>
 				<p id="license">This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of 
 					MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License <b><a href="./gpl-3.0.txt" target="_blank">here</a></b> for more details.</p>
 				<button class="btn" onclick="window.location.href='./birbs.html';"><b>Got it, take me to the birbs!</b></button>
