@@ -1,12 +1,8 @@
 <!doctype html>
 <html lang="en">
 <head>
-	<!-- Set the character encoding for this document, so that all characters within the UTF-8 space (such as emoji) are rendered correctly. -->
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-	<meta http-equiv="Pragma" content="no-cache" />
-	<meta http-equiv="Expires" content="0" />
 	<!-- Google tag (gtag.js) -->
 	<script async src="https://www.googletagmanager.com/gtag/js?id=G-V02CZ2NB53"></script>
 	<script>
@@ -42,7 +38,7 @@
 			min-height: 93vh;
 			padding-bottom: 2.5rem;    /* Footer height */
 		}
-		#birdmap { 
+		#bird-map { 
 			/* Leafelet requires a starting height for maps or will assume 0 */
 			height: 50vh;
 			width: 99%;
@@ -52,20 +48,20 @@
 			box-shadow: #422800 4px 4px 0 0;
 			color: #422800;
 		}
-		.container {
+		.button-container {
 			width: 50%;
 			margin: auto;
 		}
-		.wrapper {
+		.button-wrapper {
 			display: flex;
 		}
-		.wrapper > div {
+		.button-wrapper > div {
 			margin: .1em;
 			padding: .3em;
 			flex: 1;
 			display: flex;
 		}
-		.selectContainer {
+		.select-container {
 			height: 6.7vh;
 			flex: 1;
 			margin: .3em;
@@ -134,8 +130,8 @@
 			-webkit-user-select: none;
 			touch-action: manipulation;
 		}
-		#birbs {
-			width: 100%;
+		#birds-table {
+			width: 99%;
 			margin-top: 5%;
 			border: 1px solid;
 			border-collapse: collapse;
@@ -156,8 +152,7 @@
 			position: absolute;
 			bottom: 0;
 			width: 100%;
-			padding-top: 2rem;
-			height: 2.5rem;
+			height: 1.5rem;
 			text-align: center;
 			font-family: Arial, Helvetica, sans-serif;
 			font-weight: 600;
@@ -165,10 +160,10 @@
 			color: #525252;
 		}
 		@media only screen and (max-width: 800px) {
-			.container {
+			.button-container {
 				width: 90%;
 			}
-			.selectContainer {
+			.select-container {
 				font-size: 3vw;
 				justify-content: flex-start;
 			}
@@ -184,41 +179,41 @@
 <body>
 	<div id="page-container">
 		<div id="content-wrap">
-			<div id="birdmap"></div>
-			<div class="container">
-				<div class="wrapper">
-					<div><div class="selectContainer">
-						<label id="selectLabel" for="species">Choose bird species:</label>
-						<select name="species" id="selectSpecies" oninput="makeClassActive()">
+			<div id="bird-map"></div>
+			<div class="button-container">
+				<div class="button-wrapper">
+					<div><div class="select-container">
+						<label id="select-label" for="species">Choose bird species:</label>
+						<select name="species" id="select-species" oninput="makeClassActive()">
 							<option></option>
 						</select>
 					</div></div>
 				</div>
 
-				<div class="wrapper">
-					<div><button class="btn" id="getBirds" onclick="getBirds()">Get them birbs!</button></div>
-					<div><button class="btn" id="reMap" onclick="mymap.setView([params.lat, params.lng],10)">Re-center Map</button></div>
-					<div><button class="btn" id="selectHotSpots" onclick="clearMap()">Clear Map</button></div>				
+				<div class="button-wrapper">
+					<div><button class="btn" id="get-birds" onclick="getBirds()">Get them birbs!</button></div>
+					<div><button class="btn" id="remap" onclick="myMap.setView([params.lat, params.lng],10)">Re-center Map</button></div>
+					<div><button class="btn" id="clear-map" onclick="clearMap()">Clear Map</button></div>				
 				</div>
 
-				<div class="wrapper">
-					<div><button class="btn" id="image" onclick="imgSearch()">Image Search</button></div>
-					<div><button class="btn" id="showHotSpots" onclick="showHotSpot()">Show hotspots</button></div>
-					<div><button class="btn" id="selectHotSpots" onclick="hotSpotMarkers.clearLayers();">Hide hotspots</button></div>
+				<div class="button-wrapper">
+					<div><button class="btn" id="image-search" onclick="imgSearch()">Image Search</button></div>
+					<div><button class="btn" id="show-hotspots" onclick="showHotSpot()">Show hotspots</button></div>
+					<div><button class="btn" id="select-hotspots" onclick="hotSpotMarkers.clearLayers();">Hide hotspots</button></div>
 				</div>
 			</div>
-			<table id="birbs">
-				<tr id="birdRow"></tr>
+			<table id="birds-table">
+				<tr id="bird-row"></tr>
 			</table>
 		</div>
 		<footer class="footer">&#169; 2023 Andy Klinger | Leaflet.js &#169; <a href="https://agafonkin.com" target="_blank">Volodymyr Agafonkin</a> | Maps &#169; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors | Data &#169; <a href="https://www.ebird.org" target="_blank">Cornell University</a>
 		</footer>
 	</div>
 	<script>
-		//highlight getBirds button green to prompt user action once they have selected a bird
+		//highlight get-birds button green to prompt user action once they have selected a bird
 		function makeClassActive() {
 			console.log('changed button class');
-			document.getElementById('getBirds').className = "ready";
+			document.getElementById('get-birds').className = "ready";
 		}
 					
 		//url parameters for ebird API
@@ -228,7 +223,7 @@
 			lng: ''
 		};
 		var hotSpotParams = {
-			key: 'eo0j01ma9l9e',
+			key: params.key,
 			lat: '',
 			lng: '',
 			dist: '5'
@@ -243,19 +238,19 @@
 		var nearMe = [];
 
 		//initialize map for Leaflet at 0,0
-		const mymap = L.map('birdmap').setView([0, 0], 9);
+		const myMap = L.map('bird-map').setView([0, 0], 9);
 		const attribution = '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap';
 		const tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 		const tiles = L.tileLayer(tileUrl,{attribution});
-		tiles.addTo(mymap);
+		tiles.addTo(myMap);
 		
 		//create marker group for birds & hotspots, enables easy clearing of the canvas when changing species
 		var birdMarkers = L.featureGroup();
 		var hotSpotMarkers = L.featureGroup();
-		var markerGroup = L.markerClusterGroup();
+		var markerCluster = L.markerClusterGroup();
 
 		//bird icon for Leaflet markers
-		var birdIcon = L.icon({
+		var birdMarker = L.icon({
 			iconUrl: './293092.png',
 			shadowUrl: '',
 			iconSize:     [45, 45], // size of the icon
@@ -288,37 +283,46 @@
 		});
 
 		//create user location as const for cleaner updating of location using myMarker.setLatLng()
-		const myMarker = L.marker([0, 0], {icon: myIcon}).addTo(mymap).bindPopup("<b>My Location</b><br />",params.lat,params.lng);
+		const myMarker = L.marker([0, 0], {icon: myIcon}).addTo(myMap).bindPopup("<b>My Location</b><br />",params.lat,params.lng);
 
 
 		//clear any bird icons, hotspot icons, or table rows that are already on the screen
 		function clearMap() { 
-			var birdsContainer = document.getElementById("birbs");
+			var birdsContainer = document.getElementById("birds-table");
 			var rowCount = birdsContainer.rows.length;
 			for (var i = rowCount - 1; i > 0; i--) {
 				birdsContainer.deleteRow(i);
 			};
 			birdMarkers.clearLayers();
 			hotSpotMarkers.clearLayers();
-			markerGroup.clearLayers();
+			markerCluster.clearLayers();
 		}
 
 		//check if browser supports geolocation, then get location and update params & url, and recenter map on your location
 		if ('geolocation' in navigator) {
-			console.log('location good');
+			console.log('location enabled');
 			navigator.geolocation.getCurrentPosition(function(position)
 			{
 				params.lat = position.coords.latitude;
 				params.lng = position.coords.longitude;
-				console.log(params);
-			
+				if (params.lat != '') {
+					console.log('location received');
+				} else {
+					console.log('location not received');
+				}
+				if (params.key != '') {
+					console.log('key available');
+				} else {
+					console.log('key not available');
+				}
+
 				//recenter the map to current location
-				mymap.setView([params.lat, params.lng],13);
+				myMap.setView([params.lat, params.lng],13);
 				myMarker.setLatLng([params.lat, params.lng]);	
 				
-				//fetch recent nearby sightings and create select options for each species, append to parent select tag
-				async function getNearby() {
-					var speciesContainer = document.getElementById("selectSpecies");
+				//fetch recent nearby sightings and create select options for each species, append to html select input
+				async function getNearbyList() {
+					var speciesContainer = document.getElementById("select-species");
 					var esc = encodeURIComponent;
 					var query = Object.keys(params)
 					.map(function(k) {return esc(k) + '=' + esc(params[k]);})
@@ -334,9 +338,9 @@
 						speciesContainer.appendChild(op);	
 					};
 
-					//alphabetize the select options list
+					//alphabetize the select options list, there's gotta be a better way...
 					var list, z, switching, b, shouldSwitch;
-					list = document.getElementById("selectSpecies");
+					list = document.getElementById("select-species");
 					switching = true;
 					while (switching) {
 						switching = false;
@@ -355,28 +359,28 @@
 					}
 				}
 				//do the dang ol' thing
-				getNearby();
+				getNearbyList();
 
 			});
 
 		} else {
-			console.log('location bad');
+			console.log('location not enabled');
 		};
 
 		
 		//get ebirds APi info on button click
 		async function getBirds() {
-			//change button color back to base
+			//change 'get birds' button color back to base
 			console.log('changed button class back to normal');
-			document.getElementById('getBirds').className = "btn";
+			document.getElementById('get-birds').className = "btn";
 			//get species code from species selector
-			var e = document.getElementById("selectSpecies");
+			var e = document.getElementById("select-species");
 			var selectValue = e.value;
 			var selectText = e.options[e.selectedIndex].text;
 			console.log(selectText + ' sent to ebird API');
 
 			//clear any bird icons, hotspot icons, or table rows that are already on the screen
-			var birdsContainer = document.getElementById("birbs");
+			var birdsContainer = document.getElementById("birds-table");
 			clearMap();
 
 			//bang the url & params against the ebird api and add results to table rows
@@ -387,27 +391,27 @@
 			speciesUrl = obsUrl + '/' + selectValue + '?&' + query;
 			const response = await fetch(speciesUrl);
 			const birds = await response.json();
-			console.log('got ' + birds.length + ' bird records');
+			console.log('got ' + birds.length + ' ' + selectText + ' records');
 			for (var i = 0; i < birds.length; i++) {
 				var row = document.createElement("tr");
-				row.innerHTML = '<td id="birdRow">' + birds[i].comName + '</td><td>' + birds[i].obsDt + '</td><td>' + birds[i].locName + '</td>';
+				row.innerHTML = '<td id="bird-row">' + birds[i].comName + '</td><td>' + birds[i].obsDt + '</td><td>' + birds[i].locName + '</td>';
 				birdsContainer.appendChild(row);	
 			};
 
 			//drop a bird icon on each location
 			for (var i = 0; i < birds.length; i++) {
 				var popInfo = '<b>' + birds[i].comName + '</b><br />' + birds[i].obsDt + '<br />' + birds[i].locName;
-				L.marker([birds[i].lat,birds[i].lng], {icon:birdIcon}).addTo(birdMarkers).bindPopup(popInfo);
-				birdMarkers.addTo(mymap);
+				L.marker([birds[i].lat,birds[i].lng], {icon:birdMarker}).addTo(birdMarkers).bindPopup(popInfo);
+				birdMarkers.addTo(myMap);
 			};
 
 			//re-center the map & set zoom appropriate to results when done
-			mymap.setView([params.lat, params.lng],10);
+			myMap.setView([params.lat, params.lng],10);
 		};
 
 		//open an image search with the selected bird on button click
 		function imgSearch() {
-			var g = document.getElementById("selectSpecies");
+			var g = document.getElementById("select-species");
 			var speciesValue = g.value;
 			var speciesText = g.options[g.selectedIndex].text;
 			var searchUrl = 'https://www.google.com/search?q=' + speciesText + '&tbm=isch';
@@ -417,7 +421,7 @@
 		//show hotspot locations on map
 		var nearHotSpot = '';
 		async function showHotSpot() {
-			mymap.setView([params.lat, params.lng],11);
+			myMap.setView([params.lat, params.lng],11);
 			var esc = encodeURIComponent;
 			var query = Object.keys(params)
 			.map(function(k) {return esc(k) + '=' + esc(params[k]);})
@@ -436,7 +440,7 @@
 				
 				//drop a marker on each hotspot and bind a popup to it
 				L.marker([nearHotSpot[i].lat,nearHotSpot[i].lng], {icon:hotSpotIcon}).addTo(hotSpotMarkers).bindPopup(spotInfo);
-				hotSpotMarkers.addTo(mymap);
+				hotSpotMarkers.addTo(myMap);
 				
 			}
 			
@@ -447,7 +451,7 @@
 		async function hotSpotBirds(x,y) {
 
 			//clear any bird icons, hotspot icons, or table rows that are already on the screen
-			var birdsContainer = document.getElementById("birbs");
+			var birdsContainer = document.getElementById("birds-table");
 			clearMap();
 			hotSpotParams.lat= x ;
 			hotSpotParams.lng = y;
@@ -462,19 +466,19 @@
 			console.log('got ' + birds.length + ' bird records');
 			for (var i = 0; i < birds.length; i++) {
 				var row = document.createElement("tr");
-				row.innerHTML = '<td id="birdRow">' + birds[i].comName + '</td><td>' + birds[i].obsDt + '</td><td>' + birds[i].locName + '</td>';
+				row.innerHTML = '<td id="bird-row">' + birds[i].comName + '</td><td>' + birds[i].obsDt + '</td><td>' + birds[i].locName + '</td>';
 				birdsContainer.appendChild(row);	
 			};
 
 			//drop a bird icon on each location
 			for (var i = 0; i < birds.length; i++) {
 				var popInfo = '<b>' + birds[i].comName + '</b><br />' + birds[i].obsDt + '<br />' + birds[i].locName;
-				var hotSpotMarker = L.marker([birds[i].lat,birds[i].lng], {icon:birdIcon}).addTo(markerGroup).bindPopup(popInfo);
-				markerGroup.addTo(mymap);
+				var hotSpotMarker = L.marker([birds[i].lat,birds[i].lng], {icon:birdMarker}).addTo(markerCluster).bindPopup(popInfo);
+				markerCluster.addTo(myMap);
 			};
 
 			//re-center the map & set zoom appropriate to results when done
-			mymap.setView([hotSpotParams.lat, hotSpotParams.lng],12);
+			myMap.setView([hotSpotParams.lat, hotSpotParams.lng],12);
 		}
 
 		

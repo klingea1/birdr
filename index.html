@@ -4,9 +4,6 @@
 	<!-- Set the character encoding for this document, so that all characters within the UTF-8 space (such as emoji) are rendered correctly. -->
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-	<meta http-equiv="Pragma" content="no-cache" />
-	<meta http-equiv="Expires" content="0" />
 	<!-- Google tag (gtag.js) -->
 	<script async src="https://www.googletagmanager.com/gtag/js?id=G-V02CZ2NB53"></script>
 	<script>
@@ -129,7 +126,7 @@
 	<script>
 		var current= new Date();
 		var day_night=current.getHours();
-		if (day_night<=20 && day_night>=8) {
+		if (day_night<=19.5 && day_night>=8) {
 			console.log('day');
 			document.body.style.backgroundImage = "url('day.jpg')";
 		} else {
