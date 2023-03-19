@@ -42,6 +42,7 @@
 			/* Leafelet requires a starting height for maps or will assume 0 */
 			height: 50vh;
 			width: 99%;
+			z-index: 1;
 			margin: auto;
 			border: 2px solid #422800;
 			border-radius: 30px;
@@ -159,6 +160,86 @@
 			font-size: .75em;
 			color: #525252;
 		}
+
+		#myImg {
+        border-radius: 5px;
+        cursor: pointer;
+        transition: 0.3s;
+        }
+
+        #myImg:hover {opacity: 0.7;}
+
+        /* The Modal (background) */
+        .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 2; /* Sit on top */
+        padding-top: 100px; /* Location of the box */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.9); /* Black w/ opacity */
+        }
+
+        /* Modal Content (image) */
+        .modal-content {
+        margin: auto;
+        display: block;
+        width: 80%;
+        max-width: 700px;
+        }
+
+        /* Caption of Modal Image */
+        #caption {
+        margin: auto;
+        display: block;
+        width: 80%;
+        max-width: 700px;
+        text-align: center;
+        color: #ccc;
+        padding: 10px 0;
+        height: 150px;
+        }
+
+        /* Add Animation */
+        .modal-content, #caption {  
+        -webkit-animation-name: zoom;
+        -webkit-animation-duration: 0.6s;
+        animation-name: zoom;
+        animation-duration: 0.6s;
+        }
+
+        @-webkit-keyframes zoom {
+        from {-webkit-transform:scale(0)} 
+        to {-webkit-transform:scale(1)}
+        }
+
+        @keyframes zoom {
+        from {transform:scale(0)} 
+        to {transform:scale(1)}
+        }
+
+        /* The Close Button */
+        .close {
+        position: absolute;
+        top: 15px;
+        right: 35px;
+        color: #f1f1f1;
+        font-size: 40px;
+        font-weight: bold;
+        transition: 0.3s;
+        }
+
+        .close:hover,
+        .close:focus {
+        color: #bbb;
+        text-decoration: none;
+        cursor: pointer;
+        }
+
 		@media only screen and (max-width: 800px) {
 			.button-container {
 				width: 90%;
@@ -173,12 +254,21 @@
 			footer { 
 				font-size: 12px;
 			}
+			.modal-content {
+                width: 100%;
+            }
 		}
 	</style>
 </head>
 <body>
 	<div id="page-container">
 		<div id="content-wrap">
+			<!-- The Modal -->
+			<div id="birdModal" class="modal">
+				<span class="close">&times;</span>
+				<img class="modal-content" id="img01">
+				<div id="caption"></div>
+			</div>
 			<div id="bird-map"></div>
 			<div class="button-container">
 				<div class="button-wrapper">
@@ -197,9 +287,9 @@
 				</div>
 
 				<div class="button-wrapper">
-					<div><button class="btn" id="image-search" onclick="imgSearch()">Image Search</button></div>
+					<div><button class="btn" id="image-search" onclick="getImage()">Image Search</button></div>
 					<div><button class="btn" id="show-hotspots" onclick="showHotSpot()">Show hotspots</button></div>
-					<div><button class="btn" id="select-hotspots" onclick="hotSpotMarkers.clearLayers();">Hide hotspots</button></div>
+					<div><button class="btn" id="select-hotspots" onclick="hotSpotMarkers.clearLayers()">Hide hotspots</button></div>
 				</div>
 			</div>
 			<table id="birds-table">
@@ -214,6 +304,7 @@
 		function makeClassActive() {
 			console.log('changed button class');
 			document.getElementById('get-birds').className = "ready";
+			document.getElementById('image-search').className = "ready";
 		}
 					
 		//url parameters for ebird API
@@ -228,14 +319,20 @@
 			lng: '',
 			dist: '5'
 		}
+
+		//initial ebird query results for sciName lookup to pass to WikiPedia API
+		const initialJson = {birdCodes:{}};
+		
+		var pediaUrl = 'https://en.wikipedia.org/api/rest_v1/page/media-list/';
+        var pediaParams = '';
 		
 		//ebird API url base
 		var obsUrl = 'https://api.ebird.org/v2/data/obs/geo/recent';
 		var hotSpotUrl = 'https://api.ebird.org/v2/ref/hotspot/geo?';
 		const hotSpotTapUrl = '';
 
-		//empty nearby sightings array, not currently used but it seems like it will be more efficient to load json into arrary and alphabetize there some day...
-		var nearMe = [];
+		//empty nearby sightings array, not currently used but it seems like it will be more efficient to load json into array and alphabetize there some day...
+		//var nearMe = [];
 
 		//initialize map for Leaflet at 0,0
 		const myMap = L.map('bird-map').setView([0, 0], 9);
@@ -282,11 +379,11 @@
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		});
 
-		//create user location as const for cleaner updating of location using myMarker.setLatLng()
+		//initialize user location as const for cleaner updating of location using myMarker.setLatLng()
 		const myMarker = L.marker([0, 0], {icon: myIcon}).addTo(myMap).bindPopup("<b>My Location</b><br />",params.lat,params.lng);
 
 
-		//clear any bird icons, hotspot icons, or table rows that are already on the screen
+		//used clear any bird icons, hotspot icons, or table rows that are already on the screen
 		function clearMap() { 
 			var birdsContainer = document.getElementById("birds-table");
 			var rowCount = birdsContainer.rows.length;
@@ -320,7 +417,7 @@
 				myMap.setView([params.lat, params.lng],13);
 				myMarker.setLatLng([params.lat, params.lng]);	
 				
-				//fetch recent nearby sightings and create select options for each species, append to html select input
+				//once location is retrieved fetch recent nearby sightings to populate select options for each species, append to html <select>
 				async function getNearbyList() {
 					var speciesContainer = document.getElementById("select-species");
 					var esc = encodeURIComponent;
@@ -329,6 +426,15 @@
 					.join('&');
 					var nearResponse = await fetch(obsUrl +'/?' + query);
 					const nearBirds = await nearResponse.json();
+
+					//store the initial species list in {initialJson} using speciesCode as keys
+					for (var i = 0; i < nearBirds.length; i++) {
+						var newBird = nearBirds[i].speciesCode;
+						initialJson.birdCodes[newBird] = nearBirds[i];
+					};
+					console.log(initialJson.birdCodes.coohaw.sciName);
+
+					//add species to <select> as <options>
 					console.log('got ' + nearBirds.length + ' species nearby');
 					for (var i = 0; i < nearBirds.length; i++) {
 						var op = document.createElement("option");
@@ -338,7 +444,7 @@
 						speciesContainer.appendChild(op);	
 					};
 
-					//alphabetize the select options list, there's gotta be a better way...
+					//alphabetize the <select> options list, there's gotta be a better way...
 					var list, z, switching, b, shouldSwitch;
 					list = document.getElementById("select-species");
 					switching = true;
@@ -367,7 +473,41 @@
 			console.log('location not enabled');
 		};
 
-		
+		//get reference image from Wikipedia API using initialJson.birdCodes.<selection>.sciName
+		async function getImage() {
+			var e = document.getElementById("select-species");
+			var selectValue = e.value;
+			pediaParams = initialJson.birdCodes[selectValue].sciName;
+			console.log('sending ' + pediaParams + ' to Wikipedia API');
+            var esc = encodeURIComponent;
+			var query = Object.keys(pediaParams)
+                .map(function(k) {return esc(k) + '=' + esc(pediaParams[k]);})
+                .join('&'); 
+            const pediaResponse = await fetch(pediaUrl + pediaParams);
+			const pediaFiles = await pediaResponse.json();
+            console.log(pediaFiles);
+            var imgSrc = pediaFiles.items[0].srcset[0].src;
+            console.log(imgSrc);
+            
+			// Get the modal
+			var modal = document.getElementById("birdModal");
+
+			// Get the image and insert it inside the modal - use its "alt" text as a caption
+			var modalImg = document.getElementById("img01");
+			var captionText = document.getElementById("caption");
+			modal.style.display = "block";
+			modalImg.src = 'https:' + imgSrc;
+			captionText.innerHTML = initialJson.birdCodes[selectValue].comName;
+
+			// Get the <span> element that closes the modal
+			var span = document.getElementsByClassName("close")[0];
+
+			// When the user clicks on <span> (x), close the modal
+			span.onclick = function() { 
+			modal.style.display = "none";
+			}  
+		}
+
 		//get ebirds APi info on button click
 		async function getBirds() {
 			//change 'get birds' button color back to base
@@ -409,14 +549,6 @@
 			myMap.setView([params.lat, params.lng],10);
 		};
 
-		//open an image search with the selected bird on button click
-		function imgSearch() {
-			var g = document.getElementById("select-species");
-			var speciesValue = g.value;
-			var speciesText = g.options[g.selectedIndex].text;
-			var searchUrl = 'https://www.google.com/search?q=' + speciesText + '&tbm=isch';
-			window.open(searchUrl, '_blank');
-		}
 
 		//show hotspot locations on map
 		var nearHotSpot = '';
