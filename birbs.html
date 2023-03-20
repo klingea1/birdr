@@ -296,9 +296,6 @@
 					<div><button class="btn" id="show-hotspots" onclick="showHotSpot()">Show hotspots</button></div>
 					<div><button class="btn" id="select-hotspots" onclick="hotSpotMarkers.clearLayers()">Hide hotspots</button></div>
 				</div>
-				<!-- <div class="button-wrapper">
-					<div><button onclick="getBounds()">get boundaries</button></div>
-				</div> -->
 			</div>
 			<table id="birds-table">
 				<tr id="bird-row"></tr>
@@ -308,15 +305,13 @@
 		</footer>
 	</div>
 	<script>
-		function getBounds() {
-			console.log(myMap.getBounds());
-		}
+		
 		//highlight #get-birds button green to prompt user action once they have selected a bird
 		function makeClassActive() {
 			console.log('changed button class');
 			document.getElementById('get-birds').className = "ready";
 			document.getElementById('image-search').className = "ready";
-		}
+		};
 					
 		//url parameters for ebird API
 		var params = {
@@ -329,7 +324,7 @@
 			lat: '',
 			lng: '',
 			dist: '5'
-		}
+		};
 
 		//initial ebird query results for sciName lookup to pass to WikiPedia API
 		const initialJson = {birdCodes:{}};
@@ -340,7 +335,6 @@
 		//ebird API url base
 		var obsUrl = 'https://api.ebird.org/v2/data/obs/geo/recent';
 		var hotSpotUrl = 'https://api.ebird.org/v2/ref/hotspot/geo?';
-		const hotSpotTapUrl = '';
 
 		//empty nearby sightings array, not currently used but it seems like it will be more efficient to load json into array and alphabetize there some day...
 		//var nearMe = [];
@@ -569,28 +563,43 @@
 		//show hotspot locations on map
 		var nearHotSpot = '';
 		async function showHotSpot() {
-			myMap.setView([params.lat, params.lng],11);
+
+			//first get the center of the viewport
+			const viewCenter = {
+				key: 'eo0j01ma9l9e',
+				lat: '',
+				lng: '',
+				dist: 10
+			};
+			console.log('center of viewport is ' + (myMap.getBounds()._northEast.lat + myMap.getBounds()._southWest.lat)/2 + ', ' + (myMap.getBounds()._northEast.lng + myMap.getBounds()._southWest.lng)/2);
+			viewCenter.lat = (myMap.getBounds()._northEast.lat + myMap.getBounds()._southWest.lat)/2;
+			viewCenter.lng = (myMap.getBounds()._northEast.lng + myMap.getBounds()._southWest.lng)/2;
+
+			//fetch hotspots near viewCenter
 			var esc = encodeURIComponent;
-			var query = Object.keys(params)
-			.map(function(k) {return esc(k) + '=' + esc(params[k]);})
+			var query = Object.keys(viewCenter)
+			.map(function(k) {return esc(k) + '=' + esc(viewCenter[k]);})
 			.join('&');
 			var hotSpotResponse = await fetch(hotSpotUrl + query + '&fmt=json');
 			nearHotSpot = await hotSpotResponse.json();
 			console.log('got ' + nearHotSpot.length + ' hotspots nearby');
 			for (var i = 0; i < nearHotSpot.length; i++) {
 				
-				//create button to call hotSpotBirds() with the selected hotspot's lat & lng
+				//create button for popup to call hotSpotBirds() with the selected hotspot's lat & lng
 				var hotSpotButton = document.createElement("button");
 				hotSpotButton.value="View nearby birds";
 
 				//fill out hotspot popup with info & append button
 				var spotInfo = '<b id="hotspot'+[i]+'">' + nearHotSpot[i].locName + '</b><br /><button onclick="hotSpotBirds('+nearHotSpot[i].lat+','+nearHotSpot[i].lng+');">Show nearby birds</button>';
 				
-				//drop a marker on each hotspot and bind a popup to it
+				//drop a marker on each hotspot and bind the popup to it
 				L.marker([nearHotSpot[i].lat,nearHotSpot[i].lng], {icon:hotSpotIcon}).addTo(hotSpotMarkers).bindPopup(spotInfo);
 				hotSpotMarkers.addTo(myMap);
 				
 			}
+
+			//set zoom to reasonable level to view hotspots
+			myMap.setView([viewCenter.lat, viewCenter.lng],10);
 			
 		}
 		
