@@ -1,0 +1,22 @@
+{
+  "name": "birdr",
+  "version": "1.0.0",
+  "description": "A mapping tool for bird observations",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "birds",
+    "map",
+    "leaflet",
+    "ebird",
+    "cornell"
+  ],
+  "author": "Andy Klinger",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2"
+  }
+}
