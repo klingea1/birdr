@@ -1,0 +1,989 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<!-- Google tag (gtag.js) -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-V02CZ2NB53"></script>
+	<script>
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){dataLayer.push(arguments);}
+	gtag('js', new Date());
+	gtag('config', 'G-V02CZ2NB53');
+	</script>
+
+	<title>birbs!</title>
+	<link rel="icon" type="image/x-icon" href=".\293092.png">
+	
+	<!-- leaflet.js stylesheets and libraries -->
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+    	integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
+    	crossorigin=""/>
+	<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+		integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
+		crossorigin=""></script>
+
+	<!-- leaflet cluster plugin style & library -->
+	<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css"
+		crossorigin=""/>
+	<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster-src.js"
+		crossorigin=""></script>
+
+	<!-- Select2 library-->
+	<script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
+	<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+	<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+	
+
+	<style>
+		#page-container {
+			position: relative;
+			min-height: 100%;
+		}
+		#content-wrap {
+			min-height: 93vh;
+			padding-bottom: 2.5rem;    /* Footer height */
+		}
+		.map-wrap {
+			position: relative; /* anchor for the gear button / settings panel */
+			width: 99%;
+			margin: auto;
+		}
+		#bird-map {
+			height: 50vh; /* Leaflet requires a starting height for maps or will assume 0 */
+			width: 100%;
+			z-index: 1;
+			border: 2px solid #422800;
+			border-radius: 30px;
+			box-shadow: #422800 4px 4px 0 0;
+			color: #422800;
+		}
+		.button-container {
+			width: 50%;
+			margin: auto;
+		}
+		.button-wrapper {
+			display: flex;
+		}
+		.button-wrapper > div {
+			margin: .1em;
+			padding: .3em;
+			flex: 1;
+			display: flex;
+		}
+		.select-container {
+			height: 6.7vh;
+			flex: 1;
+			margin: .3em;
+			margin-top: .75em;
+			background-color: #fbeee0;
+			border: 2px solid #422800;
+			border-radius: 30px;
+			box-shadow: #422800 4px 4px 0 0;
+			color: #422800;
+			cursor: default;
+			font-family: Arial, Helvetica, sans-serif;
+			font-weight: 600;
+			font-size: 1.25vw;
+			text-align: center;
+			text-decoration: none;
+			display: flex;
+			align-items: center;
+    		justify-content: space-evenly;
+		}
+		.select2, .select2-container, .select2-container--default, .select2-container--below {
+			width: 50% !important;
+		}
+		.selection, .select2-dropdown, .select2-dropdown--below {
+			font-family: Arial, Helvetica, sans-serif;
+			font-weight: 400;
+			font-size: .85vw;
+		}
+		label, select{ 
+			padding-left: 5%;
+			margin: .3em;
+		}
+		.btn {
+			height: 7vh;
+			flex: 1;
+			margin: .3em;
+			background-color: #fbeee0;
+			border: 2px solid #422800;
+			border-radius: 30px;
+			box-shadow: #422800 4px 4px 0 0;
+			color: #422800;
+			cursor: pointer;
+			font-family: Arial, Helvetica, sans-serif;
+			font-weight: 600;
+			font-size: 1.25vw;
+			text-align: center;
+			text-decoration: none;
+			user-select: none;
+			-webkit-user-select: none;
+			touch-action: manipulation;
+		}
+		.btn:hover {
+			background-color: #fff;
+		}
+		.btn:active {
+			box-shadow: #422800 2px 2px 0 0;
+			transform: translate(2px, 2px);
+		}
+		.ready { 
+			height: 7vh;
+			flex: 1;
+			margin: .3em;
+			background-color: #80d0b5;
+			border: 2px solid #384d32;
+			border-radius: 30px;
+			box-shadow: #422800 4px 4px 0 0;
+			color: #384d32;
+			cursor: pointer;
+			font-family: Arial, Helvetica, sans-serif;
+			font-weight: 600;
+			font-size: 1.25vw;
+			text-align: center;
+			text-decoration: none;
+			user-select: none;
+			-webkit-user-select: none;
+			touch-action: manipulation;
+		}
+		#birds-table-container {
+			height: 13vh;
+			margin-top: 1%;
+			overflow-y: auto;
+		}
+		#birds-table {
+			width: 99%;
+			max-height: 30vh;
+			border: 1px solid;
+			overflow-y: auto;
+			border-collapse: collapse;
+		}
+		tr, td, select { 
+			padding-left: 5px;
+		}
+		tr:hover {
+			background-color: #80d0b5;
+			color: white;
+			font-weight: 600;
+		}
+		a{
+            text-decoration: none;
+            color: #578f45;
+        }
+		footer{
+			position: absolute;
+			bottom: 0;
+			width: 100%;
+			height: 1.5rem;
+			text-align: center;
+			font-family: Arial, Helvetica, sans-serif;
+			font-weight: 600;
+			font-size: .75em;
+			color: #525252;
+		}
+
+		/* The Modal (background) */
+        .modal {
+			display: none; /* Hidden by default */
+			position: fixed;
+			z-index: 2;
+			padding-top: 50px;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			overflow: auto;
+			background-color: rgb(0,0,0);
+			background-color: rgba(0,0,0,0.9);
+        }
+
+        /* Modal Content (image) - fixed display height so portrait and landscape
+           photos occupy the same vertical space and never overflow the viewport */
+			.modal-content {
+			margin: auto;
+			display: block;
+			height: 60vh;
+			width: auto;
+			max-width: 92vw;
+			object-fit: contain;
+        }
+
+        /* Prev / next photo arrows */
+        .modal-nav {
+			display: none; /* shown by JS once a multi-photo gallery loads */
+			position: fixed;
+			top: 50%;
+			transform: translateY(-50%);
+			padding: 10px 16px;
+			color: #f1f1f1;
+			font-size: 40px;
+			font-weight: bold;
+			cursor: pointer;
+			user-select: none;
+			-webkit-user-select: none;
+			transition: 0.3s;
+			z-index: 3;
+        }
+        .modal-nav:hover {
+			color: #bbb;
+        }
+        #prev-photo { left: 10px; }
+        #next-photo { right: 10px; }
+
+        /* Caption of Modal Image */
+        #caption {
+			margin: auto;
+			display: block;
+			width: 80%;
+			max-width: 700px;
+			text-align: center;
+			color: #ccc;
+			padding: 10px 0;
+        }
+
+        /* Photo credit line + thumbnail strip (iNaturalist gallery) */
+        #bird-credit {
+			margin: 8px auto 0;
+			width: 80%;
+			max-width: 700px;
+			text-align: center;
+			color: #ccc;
+			font-family: Arial, Helvetica, sans-serif;
+			font-size: .8em;
+        }
+        #bird-credit a {
+			color: #80d0b5;
+        }
+        #bird-thumbs {
+			display: flex;
+			gap: 6px;
+			margin: 10px auto 0;
+			width: 80%;
+			max-width: 700px;
+			overflow-x: auto;
+			padding-bottom: 4px;
+        }
+        .bird-thumb {
+			flex: 0 0 auto;
+			width: 70px;
+			height: 70px;
+			object-fit: cover;
+			border: 3px solid transparent;
+			border-radius: 6px;
+			cursor: pointer;
+        }
+        .bird-thumb.selected {
+			border-color: #80d0b5;
+        }
+
+        /* Modal Animation */
+        .modal-content, #caption {  
+			-webkit-animation-name: zoom;
+			-webkit-animation-duration: 0.6s;
+			animation-name: zoom;
+			animation-duration: 0.6s;
+        }
+
+        @-webkit-keyframes zoom {
+			from {-webkit-transform:scale(0)} 
+			to {-webkit-transform:scale(1)}
+        }
+
+        @keyframes zoom {
+			from {transform:scale(0)} 
+			to {transform:scale(1)}
+        }
+
+        /* Modal Close Button */
+        .close {
+			position: absolute;
+			top: 15px;
+			right: 35px;
+			color: #f1f1f1;
+			font-size: 40px;
+			font-weight: bold;
+			transition: 0.3s;
+        }
+
+        .close:hover, .close:focus {
+			color: #bbb;
+			text-decoration: none;
+			cursor: pointer;
+        }
+
+		/* Search settings (gear over the lower-left of the map) */
+		.settings-toggle {
+			position: absolute;
+			left: 16px;
+			bottom: 16px;
+			z-index: 1000; /* above Leaflet tiles/controls */
+			width: 44px;
+			height: 44px;
+			padding: 0;
+			background-color: #fbeee0;
+			border: 2px solid #422800;
+			border-radius: 50%;
+			box-shadow: #422800 3px 3px 0 0;
+			color: #422800;
+			font-size: 1.5em;
+			line-height: 1;
+			cursor: pointer;
+			touch-action: manipulation;
+		}
+		.settings-toggle:hover {
+			background-color: #fff;
+		}
+		.settings-toggle:active {
+			box-shadow: #422800 1px 1px 0 0;
+			transform: translate(2px, 2px);
+		}
+		.settings-panel {
+			display: none; /* toggled by .open so it can beat the flex display */
+			position: absolute;
+			left: 16px;
+			bottom: 68px; /* just above the 44px gear button */
+			z-index: 1000;
+			max-width: calc(100% - 32px);
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 1em;
+			padding: .6em 1em;
+			background-color: #fbeee0;
+			border: 2px solid #422800;
+			border-radius: 20px;
+			box-shadow: #422800 4px 4px 0 0;
+			color: #422800;
+			font-family: Arial, Helvetica, sans-serif;
+			font-weight: 600;
+		}
+		.settings-panel.open {
+			display: flex;
+		}
+		.settings-panel .setting {
+			display: flex;
+			flex-direction: column;
+			font-size: .8em;
+			padding-left: 0;
+		}
+		.settings-panel input {
+			width: 5em;
+			margin-top: .25em;
+			padding: .3em;
+			border: 2px solid #422800;
+			border-radius: 10px;
+			background-color: #fff;
+			color: #422800;
+			font-family: Arial, Helvetica, sans-serif;
+			font-weight: 600;
+			font-size: 1.1em;
+		}
+
+		@media only screen and (max-width: 800px) {
+			.button-container {
+				width: 90%;
+			}
+			.select-container {
+				font-size: 3vw;
+				justify-content: flex-start;
+			}
+			.selection, .select2-dropdown, .select2-dropdown--below {
+			font-size: 2.85vw;
+			}
+			.btn, .ready {
+				font-size: 2.75vw;
+			}
+			footer {
+				font-size: 12px;
+			}
+			.modal-content {
+				height: 55vh;
+				max-width: 84vw; /* leave room for the nav arrows */
+			}
+			.modal-nav {
+				font-size: 28px;
+				padding: 10px 6px;
+			}
+			.settings-panel {
+				font-size: 3vw;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div id="page-container">
+		<div id="content-wrap">
+			<!-- The Modal -->
+			<div id="bird-modal" class="modal">
+				<span class="close">&times;</span>
+				<span class="modal-nav" id="prev-photo" title="Previous photo">&#10094;</span>
+				<span class="modal-nav" id="next-photo" title="Next photo">&#10095;</span>
+				<img class="modal-content" id="bird-image">
+				<div id="bird-credit"></div>
+				<div id="bird-thumbs"></div>
+				<div id="caption"></div>
+			</div>
+			<div class="map-wrap">
+				<div id="bird-map"></div>
+				<button class="settings-toggle" id="settings-toggle" onclick="toggleSettings()" aria-expanded="false" aria-controls="settings-panel" title="Search settings">&#9881;</button>
+				<div id="settings-panel" class="settings-panel">
+					<label class="setting" for="setting-back">Days back (1&ndash;30)
+						<input type="number" id="setting-back" min="1" max="30" step="1" value="14" onchange="applySettings()">
+					</label>
+					<label class="setting" for="setting-dist">Radius mi (1&ndash;31)
+						<input type="number" id="setting-dist" min="1" max="31" step="1" value="15" onchange="applySettings()">
+					</label>
+				</div>
+			</div>
+			<div class="button-container">
+				<div class="button-wrapper">
+					<div><div class="select-container">
+						<label id="select-label" for="species">Choose bird species:</label>
+						<select name="species" id="select-species" oninput="makeClassActive()">
+							<option></option>
+						</select>
+					</div></div>
+				</div>
+
+				<div class="button-wrapper">
+					<div><button class="btn" id="get-birds" onclick="getBirds()">Get Them Birbs!</button></div>
+					<div><button class="btn" id="remap" onclick="myMap.setView([params.lat, params.lng],zoomLevel)">Re-center Map</button></div>
+					<div><button class="btn" id="clear-map" onclick="clearMap()">Clear Map</button></div>				
+				</div>
+
+				<div class="button-wrapper">
+					<div><button class="btn" id="image-search" onclick="getImage()">Image Search</button></div>
+					<div><button class="btn" id="show-hotspots" onclick="showHotSpot()">Show Hotspots</button></div>
+					<div><button class="btn" id="select-hotspots" onclick="hotSpotMarkers.clearLayers()">Hide Hotspots</button></div>
+				</div>
+			</div>
+			<div id="birds-table-container">
+				<table id="birds-table">
+					<tbody id="birds-table-body">	
+						<tr></tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<footer class="footer">&#169; 2023 Andy Klinger | Leaflet.js &#169; <a href="https://agafonkin.com" target="_blank">Volodymyr Agafonkin</a> | Maps &#169; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors | Data &#169; <a href="https://www.ebird.org" target="_blank">Cornell University</a>
+		</footer>
+	</div>
+	<script>
+		
+		//highlight #get-birds button green to prompt user action once they have selected a bird
+		function makeClassActive() {
+			console.log('changed button class');
+			document.getElementById('get-birds').className = "ready";
+			document.getElementById('image-search').className = "ready";
+		};
+
+		//show/hide the search settings panel behind the gear icon
+		function toggleSettings() {
+			var panel = document.getElementById('settings-panel');
+			var btn = document.getElementById('settings-toggle');
+			var open = panel.classList.toggle('open');
+			btn.setAttribute('aria-expanded', open);
+		}
+
+		//keep a value within eBird's allowed range, falling back if it isn't a number
+		function clampNum(val, min, max, fallback) {
+			var n = parseInt(val, 10);
+			if (isNaN(n)) { return fallback; }
+			return Math.min(max, Math.max(min, n));
+		}
+
+		//miles -> km, since eBird's dist parameter is kilometres
+		var MILES_TO_KM = 1.60934;
+
+		//read the settings inputs, clamp them, then refresh the species list for the new window
+		function applySettings() {
+			var backEl = document.getElementById('setting-back');
+			var distEl = document.getElementById('setting-dist');
+			var back = clampNum(backEl.value, 1, 30, 14);
+			var miles = clampNum(distEl.value, 1, 31, 15); // 31 mi ~= 49.9 km, just under eBird's 50 km cap
+			backEl.value = back;
+			distEl.value = miles;
+
+			//convert the mile radius to km for the API and keep it inside the 50 km limit
+			var distKm = Math.min(50, Math.max(1, Math.round(miles * MILES_TO_KM)));
+
+			params.back = back;
+			params.dist = distKm;
+			hotSpotParams.back = back;
+			hotSpotParams.dist = distKm;
+			console.log('settings: back=' + back + ' days, radius=' + miles + ' mi (' + distKm + ' km)');
+
+			//existing markers/rows are for the old window - clear them and rebuild the dropdown
+			clearMap();
+			getNearbyList();
+		}
+
+		//url parameters for ebird API (back = days to look back 1-30; dist = search radius in km,
+		//derived from the miles value in the settings panel, capped at eBird's 50 km max)
+		var params = {
+			key: 'eo0j01ma9l9e',
+			lat: '',
+			lng: '',
+			back: 14,
+			dist: 24
+		};
+		var hotSpotParams = {
+			key: params.key,
+			lat: '',
+			lng: '',
+			dist: 24,
+			back: 14
+		};
+
+		//keeps zoom level consistent
+		var zoomLevel = 10;
+
+		//initial ebird query results, keyed by speciesCode - holds sciName/comName for the iNaturalist lookup
+		const initialJson = {birdCodes:{}};
+
+		//iNaturalist taxa API - reference photo gallery, keyed by scientific name
+		var inatUrl = 'https://api.inaturalist.org/v1/taxa';
+
+		//ebird API url base
+		var obsUrl = 'https://api.ebird.org/v2/data/obs/geo/recent';
+		var hotSpotUrl = 'https://api.ebird.org/v2/ref/hotspot/geo?';
+
+		//empty nearby sightings array, not currently used but it seems like it will be more efficient to load json into array and alphabetize there some day...
+		//var nearMe = [];
+
+		//initialize map for Leaflet at 0,0
+		const myMap = L.map('bird-map').setView([0, 0], 9);
+		const attribution = '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap';
+		const tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+		const tiles = L.tileLayer(tileUrl,{attribution});
+		tiles.addTo(myMap);
+		
+		//create marker group for birds & hotspots, enables easy clearing of the canvas when changing species
+		var birdMarkers = L.featureGroup();
+		var hotSpotMarkers = L.featureGroup();
+		var markerCluster = L.markerClusterGroup();
+
+		//bird icon for Leaflet markers
+		var birdMarker = L.icon({
+			iconUrl: './293092.png',
+			shadowUrl: '',
+			iconSize:     [45, 45], // size of the icon
+			shadowSize:   [50, 64], // size of the shadow
+			iconAnchor:   [27, 27], // point of the icon which will correspond to marker's location
+			shadowAnchor: [4, 62],  // the same for the shadow
+			popupAnchor:  [-3, -26] // point from which the popup should open relative to the iconAnchor
+		});
+
+		//hotspot icon for Leaflet markers
+		var hotSpotIcon = L.icon({
+			iconUrl: './789468.png',
+			shadowUrl: '',
+			iconSize:     [45, 45], // size of the icon
+			shadowSize:   [50, 64], // size of the shadow
+			iconAnchor:   [27, 27], // point of the icon which will correspond to marker's location
+			shadowAnchor: [4, 62],  // the same for the shadow
+			popupAnchor:  [-3, -26] // point from which the popup should open relative to the iconAnchor
+		});
+
+		//user icon for Leaflet markers
+		var myIcon = L.icon({
+			iconUrl: './2503463.png',
+			shadowUrl: '',
+			iconSize:     [60, 60], // size of the icon
+			shadowSize:   [50, 64], // size of the shadow
+			iconAnchor:   [27, 27], // point of the icon which will correspond to marker's location
+			shadowAnchor: [4, 62],  // the same for the shadow
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		});
+
+		//initialize user location as const for cleaner updating of location using myMarker.setLatLng()
+		const myMarker = L.marker([0, 0], {icon: myIcon}).addTo(myMap).bindPopup("<b>My Location</b><br />",params.lat,params.lng);
+
+
+		//used clear any bird icons, hotspot icons, or table rows that are already on the screen
+		function clearMap() { 
+			var birdsContainer = document.getElementById("birds-table");
+			var rowCount = birdsContainer.rows.length;
+			for (var i = rowCount - 1; i > 0; i--) {
+				birdsContainer.deleteRow(i);
+			};
+			birdMarkers.clearLayers();
+			hotSpotMarkers.clearLayers();
+			markerCluster.clearLayers();
+		}
+
+		//check if browser supports geolocation, then get location and update params & url, and recenter map on your location
+		if ('geolocation' in navigator) {
+			console.log('location enabled');
+			navigator.geolocation.getCurrentPosition(function(position)
+			{
+				params.lat = position.coords.latitude;
+				params.lng = position.coords.longitude;
+				if (params.lat != '') {
+					console.log('location received');
+				} else {
+					console.log('location not received');
+				}
+				if (params.key != '') {
+					console.log('key available');
+				} else {
+					console.log('key not available');
+				}
+
+				//recenter the map to current location
+				myMap.setView([params.lat, params.lng],zoomLevel);
+				myMarker.setLatLng([params.lat, params.lng]);	
+				
+				//once location is retrieved, (re)populate the species list
+				getNearbyList();
+
+			});
+
+		} else {
+			console.log('location not enabled');
+		};
+
+		//fetch recent nearby sightings and (re)populate the species <select>.
+		//kept at this scope so it can be re-run when the search settings change.
+		async function getNearbyList() {
+			if (params.lat === '' || params.lng === '') { return; }
+			var speciesContainer = document.getElementById("select-species");
+			var esc = encodeURIComponent;
+			var query = Object.keys(params)
+			.map(function(k) {return esc(k) + '=' + esc(params[k]);})
+			.join('&');
+			var nearResponse = await fetch(obsUrl +'?' + query);
+			const nearBirds = await nearResponse.json();
+
+			//clear anything a previous run left behind so this is safe to call again
+			initialJson.birdCodes = {};
+			if ($('#select-species').data('select2')) {
+				$('#select-species').select2('destroy');
+			}
+			speciesContainer.innerHTML = '<option></option>';
+
+			//store the species list in {initialJson} using speciesCodes as keys
+			for (var i = 0; i < nearBirds.length; i++) {
+				var newBird = nearBirds[i].speciesCode;
+				initialJson.birdCodes[newBird] = nearBirds[i];
+			};
+
+			//add species to <select> as <options>
+			console.log('got ' + nearBirds.length + ' species nearby');
+			for (var i = 0; i < nearBirds.length; i++) {
+				var op = document.createElement("option");
+					op.innerHTML = nearBirds[i].comName;
+					op.value = nearBirds[i].speciesCode;
+					op.ID = 'speciesOption';
+					speciesContainer.appendChild(op);
+
+			};
+
+			//alphabetize the <select> options list, there's gotta be a better way...
+			var list, z, switching, b, shouldSwitch;
+			list = document.getElementById("select-species");
+			switching = true;
+			while (switching) {
+				switching = false;
+				b = list.getElementsByTagName("option");
+				for (z = 0; z < (b.length - 1); z++) {
+					shouldSwitch = false;
+					if (b[z].innerHTML.toLowerCase() > b[z + 1].innerHTML.toLowerCase()) {
+						shouldSwitch = true;
+						break;
+					}
+				}
+				if (shouldSwitch) {
+					b[z].parentNode.insertBefore(b[z + 1], b[z]);
+					switching = true;
+				}
+			}
+			$('#select-species').select2({
+				placeholder: 'Select a species'
+			});
+		}
+
+		//function to update user location
+		function updateLocation() {
+			navigator.geolocation.getCurrentPosition(function(position){
+				params.lat = position.coords.latitude;
+				params.lng = position.coords.longitude;
+
+				//recenter the map to current location
+				myMarker.setLatLng([params.lat, params.lng]);
+				console.log('location updated');
+			}
+		)};
+		//continually update user location
+		setInterval(() => {
+			updateLocation();
+		}, 6000);
+	
+
+		//alphabetize the table
+		function sortTable() {
+			var table, rows, switching, i, x, y, shouldSwitch;
+			table = document.getElementById("birds-table");
+			switching = true;
+			/* Make a loop that will continue until
+			no switching has been done: */
+			while (switching) {
+				// Start by saying: no switching is done:
+				switching = false;
+				rows = table.rows;
+				/* Loop through all table rows (except the
+				first, which contains table headers): */
+				for (i = 1; i < (rows.length - 1); i++) {
+				// Start by saying there should be no switching:
+				shouldSwitch = false;
+				/* Get the two elements you want to compare,
+				one from current row and one from the next: */
+				x = rows[i].getElementsByTagName("td")[0];
+				y = rows[i + 1].getElementsByTagName("td")[0];
+				// Check if the two rows should switch place:
+				if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+					// If so, mark as a switch and break the loop:
+					shouldSwitch = true;
+					break;
+				}
+				}
+				if (shouldSwitch) {
+				/* If a switch has been marked, make the switch
+				and mark that a switch has been done: */
+				rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+				switching = true;
+				}
+			}
+		}
+
+		//open the modal with a gallery of reference photos from iNaturalist for the selected species
+		async function getImage() {
+			//change 'image search' button color back to base
+			console.log('changed button class back to normal');
+			document.getElementById('image-search').className = "btn";
+
+			//look up the sciName / comName for the current <select> value
+			var e = document.getElementById("select-species");
+			var selectValue = e.value;
+			if (!selectValue || !initialJson.birdCodes[selectValue]) { return; }
+			var sciName = initialJson.birdCodes[selectValue].sciName;
+			var comName = initialJson.birdCodes[selectValue].comName;
+
+			var modal = document.getElementById("bird-modal");
+			var modalImg = document.getElementById("bird-image");
+			var creditEl = document.getElementById("bird-credit");
+			var thumbsEl = document.getElementById("bird-thumbs");
+			var captionText = document.getElementById("caption");
+
+			//show the modal straight away in a loading state
+			modalImg.removeAttribute('src');
+			thumbsEl.innerHTML = '';
+			document.getElementById('prev-photo').style.display = 'none';
+			document.getElementById('next-photo').style.display = 'none';
+			creditEl.textContent = 'Loading photos…';
+			captionText.innerHTML = comName + ' &middot; <i>' + sciName + '</i>';
+			modal.style.display = "block";
+
+			//close button
+			var span = document.getElementsByClassName("close")[0];
+			span.onclick = function() { modal.style.display = "none"; };
+
+			try {
+				//1. resolve the scientific name to an iNaturalist taxon id (prefer an exact name match)
+				console.log('looking up ' + sciName + ' on iNaturalist');
+				var esc = encodeURIComponent;
+				var searchRes = await fetch(inatUrl + '?rank=species&iconic_taxa=Aves&per_page=10&q=' + esc(sciName));
+				var searchJson = await searchRes.json();
+				var hits = searchJson.results || [];
+				if (!hits.length) {
+					creditEl.textContent = 'No reference photos found for ' + sciName + '.';
+					return;
+				}
+				var match = hits.filter(function(r) {
+					return (r.name || '').toLowerCase() === sciName.toLowerCase();
+				})[0] || hits[0];
+
+				//2. fetch the taxon detail, which carries the photo gallery
+				var taxonRes = await fetch(inatUrl + '/' + match.id);
+				var taxonJson = await taxonRes.json();
+				var detail = (taxonJson.results || [])[0] || {};
+				var photos = (detail.taxon_photos || []).map(function(tp) { return tp.photo; });
+				if (!photos.length) {
+					creditEl.textContent = 'No reference photos found for ' + sciName + '.';
+					return;
+				}
+				console.log('got ' + photos.length + ' photos for ' + sciName);
+
+				//gallery state
+				var thumbEls = [];
+				var currentIndex = 0;
+				var prevBtn = document.getElementById('prev-photo');
+				var nextBtn = document.getElementById('next-photo');
+
+				//show the photo at idx (wraps around), syncing credit line, counter and thumb highlight
+				function select(idx) {
+					currentIndex = (idx + photos.length) % photos.length;
+					var p = photos[currentIndex];
+					modalImg.src = p.large_url || p.medium_url || p.url;
+					creditEl.innerHTML = 'Photo: ' + (p.attribution || 'iNaturalist') +
+						' — <a href="https://www.inaturalist.org/photos/' + p.id + '" target="_blank" rel="noopener">iNaturalist</a>' +
+						'  (' + (currentIndex + 1) + '/' + photos.length + ')';
+					thumbEls.forEach(function(t, i) { t.classList.toggle('selected', i === currentIndex); });
+					thumbEls[currentIndex].scrollIntoView({ block: 'nearest', inline: 'center' });
+				}
+
+				//build the thumbnail strip
+				photos.forEach(function(p, idx) {
+					var thumb = document.createElement('img');
+					thumb.className = 'bird-thumb';
+					thumb.src = p.square_url || p.url;
+					thumb.alt = comName + ' photo ' + (idx + 1);
+					thumb.onclick = function() { select(idx); };
+					thumbsEl.appendChild(thumb);
+					thumbEls.push(thumb);
+				});
+
+				//prev / next arrows - only meaningful with more than one photo
+				var multi = photos.length > 1;
+				prevBtn.style.display = multi ? 'block' : 'none';
+				nextBtn.style.display = multi ? 'block' : 'none';
+				prevBtn.onclick = function() { select(currentIndex - 1); };
+				nextBtn.onclick = function() { select(currentIndex + 1); };
+
+				select(0);
+			} catch (err) {
+				console.log('iNaturalist lookup failed: ' + err);
+				creditEl.textContent = 'Could not load reference photos right now.';
+			}
+		}
+
+		//get ebirds APi info on button click
+		async function getBirds() {
+			//change 'get birds' button color back to base
+			console.log('changed button class back to normal');
+			document.getElementById('get-birds').className = "btn";
+			//get species code from species selector
+			var e = document.getElementById("select-species");
+			var selectValue = e.value;
+			var selectText = e.options[e.selectedIndex].text;
+			console.log(selectText + ' sent to ebird API');
+
+			//clear any bird icons, hotspot icons, or table rows that are already on the screen
+			var birdsContainer = document.getElementById("birds-table-body");
+			clearMap();
+
+			//bang the url & params against the ebird api and add results to table rows
+			var esc = encodeURIComponent;
+			var query = Object.keys(params)
+			.map(function(k) {return esc(k) + '=' + esc(params[k]);})
+			.join('&');
+			speciesUrl = obsUrl + '/' + selectValue + '?&' + query;
+			const response = await fetch(speciesUrl);
+			const birds = await response.json();
+			console.log('got ' + birds.length + ' ' + selectText + ' records');
+			for (var i = 0; i < birds.length; i++) {
+				var row = document.createElement("tr");
+				row.innerHTML = '<td>' + birds[i].comName + '</td><td>' + birds[i].obsDt + '</td><td>' + birds[i].locName + '</td>';
+				birdsContainer.appendChild(row);	
+			};
+
+			sortTable();
+
+			//drop a bird icon on each location
+			for (var i = 0; i < birds.length; i++) {
+				var popInfo = '<b>' + birds[i].comName + '</b><br /> how many: ' + birds[i].howMany + '</b><br /> when: ' + birds[i].obsDt + '<br /> where: ' + birds[i].locName;
+				L.marker([birds[i].lat,birds[i].lng], {icon:birdMarker}).addTo(birdMarkers).bindPopup(popInfo);
+				birdMarkers.addTo(myMap);
+			};
+
+			//re-center the map & set zoom appropriate to results when done
+			myMap.setView([params.lat, params.lng],zoomLevel);
+		};
+
+
+		//show hotspot locations on map
+		var nearHotSpot = '';
+		async function showHotSpot() {
+
+			//first get the center of the viewport
+			const viewCenter = {
+				key: 'eo0j01ma9l9e',
+				lat: '',
+				lng: '',
+				dist: 10
+			};
+			console.log('center of viewport is ' + (myMap.getBounds()._northEast.lat + myMap.getBounds()._southWest.lat)/2 + ', ' + (myMap.getBounds()._northEast.lng + myMap.getBounds()._southWest.lng)/2);
+			viewCenter.lat = (myMap.getBounds()._northEast.lat + myMap.getBounds()._southWest.lat)/2;
+			viewCenter.lng = (myMap.getBounds()._northEast.lng + myMap.getBounds()._southWest.lng)/2;
+
+			//fetch hotspots near viewCenter
+			var esc = encodeURIComponent;
+			var query = Object.keys(viewCenter)
+			.map(function(k) {return esc(k) + '=' + esc(viewCenter[k]);})
+			.join('&');
+			var hotSpotResponse = await fetch(hotSpotUrl + query + '&fmt=json');
+			nearHotSpot = await hotSpotResponse.json();
+			console.log('got ' + nearHotSpot.length + ' hotspots nearby');
+			for (var i = 0; i < nearHotSpot.length; i++) {
+				
+				//create button for popup to call hotSpotBirds() with the selected hotspot's lat & lng
+				var hotSpotButton = document.createElement("button");
+				hotSpotButton.value="View nearby birds";
+
+				//fill out hotspot popup with info & append button
+				var spotInfo = '<b id="hotspot'+[i]+'">' + nearHotSpot[i].locName + '</b><br /><button onclick="hotSpotBirds('+nearHotSpot[i].lat+','+nearHotSpot[i].lng+');">Show nearby birds</button>';
+				
+				//drop a marker on each hotspot and bind the popup to it
+				L.marker([nearHotSpot[i].lat,nearHotSpot[i].lng], {icon:hotSpotIcon}).addTo(hotSpotMarkers).bindPopup(spotInfo);
+				hotSpotMarkers.addTo(myMap);
+				
+			}
+
+			//set zoom to reasonable level to view hotspots
+			myMap.setView([viewCenter.lat, viewCenter.lng],zoomLevel);
+			
+		}
+		
+
+		//show bird sightings near hotspot when user taps button
+		async function hotSpotBirds(x,y) {
+
+			//clear any bird icons, hotspot icons, or table rows that are already on the screen
+			var birdsContainer = document.getElementById("birds-table-body");
+			clearMap();
+			hotSpotParams.lat= x ;
+			hotSpotParams.lng = y;
+
+			//bang the url & params against the ebird api and add results to table rows
+			var esc = encodeURIComponent;
+			var query = Object.keys(hotSpotParams)
+			.map(function(k) {return esc(k) + '=' + esc(hotSpotParams[k]);})
+			.join('&');
+			const response = await fetch(obsUrl + '?' + query);
+			const birds = await response.json();
+			console.log('got ' + birds.length + ' bird records');
+			for (var i = 0; i < birds.length; i++) {
+				var row = document.createElement("tr");
+				row.innerHTML = '<td>' + birds[i].comName + '</td><td>' + birds[i].obsDt + '</td><td>' + birds[i].locName + '</td>';
+				birdsContainer.appendChild(row);	
+			};
+
+			sortTable();
+
+			//drop a bird icon on each location
+			for (var i = 0; i < birds.length; i++) {
+				var popInfo = '<b>' + birds[i].comName + '</b><br />' + birds[i].obsDt + '<br />' + birds[i].locName;
+				var hotSpotMarker = L.marker([birds[i].lat,birds[i].lng], {icon:birdMarker}).addTo(markerCluster).bindPopup(popInfo);
+				markerCluster.addTo(myMap);
+			};
+
+			//re-center the map & set zoom appropriate to results when done
+			myMap.setView([hotSpotParams.lat, hotSpotParams.lng],zoomLevel);
+		}
+
+		
+	</script>
+
+</body>
+</html>
