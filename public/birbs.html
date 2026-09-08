@@ -149,24 +149,58 @@
 			touch-action: manipulation;
 		}
 		#birds-table-container {
-			height: 13vh;
 			margin-top: 1%;
+			max-height: 32vh;
 			overflow-y: auto;
+			overflow-x: auto;
 		}
 		#birds-table {
 			width: 99%;
-			max-height: 30vh;
 			border: 1px solid;
-			overflow-y: auto;
 			border-collapse: collapse;
 		}
-		tr, td, select { 
+		tr, td, select {
 			padding-left: 5px;
 		}
-		tr:hover {
+		tbody tr:hover {
 			background-color: #80d0b5;
 			color: white;
 			font-weight: 600;
+		}
+		/* results sort control + table header */
+		#results-controls {
+			display: flex;
+			align-items: center;
+			gap: .5em;
+			padding: 4px 5px 6px;
+			font-family: Arial, Helvetica, sans-serif;
+			font-weight: 600;
+			font-size: .8em;
+			color: #422800;
+		}
+		#results-controls select {
+			padding: .2em .4em;
+			border: 2px solid #422800;
+			border-radius: 8px;
+			background-color: #fbeee0;
+			color: #422800;
+			font-family: Arial, Helvetica, sans-serif;
+			font-weight: 600;
+		}
+		#birds-table thead th {
+			position: sticky;
+			top: 0;
+			background-color: #fbeee0;
+			border-bottom: 2px solid #422800;
+			text-align: left;
+			padding: 4px 5px;
+			font-family: Arial, Helvetica, sans-serif;
+			font-size: .8em;
+			color: #422800;
+		}
+		#birds-table td a {
+			color: #578f45;
+			text-decoration: underline;
 		}
 		a{
             text-decoration: none;
@@ -276,6 +310,25 @@
         }
         .bird-thumb.selected {
 			border-color: #80d0b5;
+        }
+
+        /* Species blurb (iNaturalist / Wikipedia summary) */
+        #bird-blurb {
+			margin: 12px auto 0;
+			width: 80%;
+			max-width: 700px;
+			color: #ddd;
+			font-family: Arial, Helvetica, sans-serif;
+			font-size: .85em;
+			line-height: 1.45;
+			text-align: left;
+        }
+        #bird-blurb a { color: #80d0b5; }
+        #bird-blurb .status {
+			display: block;
+			margin-top: 6px;
+			font-weight: 600;
+			color: #ffd27f;
         }
 
         /* Modal Animation */
@@ -408,6 +461,10 @@
 			.settings-panel {
 				font-size: 3vw;
 			}
+			#results-controls,
+			#birds-table thead th {
+				font-size: 3vw;
+			}
 		}
 	</style>
 </head>
@@ -423,6 +480,7 @@
 				<div id="bird-credit"></div>
 				<div id="bird-thumbs"></div>
 				<div id="caption"></div>
+				<div id="bird-blurb"></div>
 			</div>
 			<div class="map-wrap">
 				<div id="bird-map"></div>
@@ -458,11 +516,22 @@
 					<div><button class="btn" id="select-hotspots" onclick="hotSpotMarkers.clearLayers()">Hide Hotspots</button></div>
 				</div>
 			</div>
-			<div id="birds-table-container">
+			<div id="birds-table-container" hidden>
+				<div id="results-controls">
+					<label for="sort-by">Sort by:</label>
+					<select id="sort-by" onchange="renderResults()">
+						<option value="date-desc">Date &mdash; newest</option>
+						<option value="date-asc">Date &mdash; oldest</option>
+						<option value="name">Name A&ndash;Z</option>
+						<option value="distance">Distance &mdash; nearest</option>
+						<option value="count-desc">Count &mdash; most</option>
+					</select>
+				</div>
 				<table id="birds-table">
-					<tbody id="birds-table-body">	
-						<tr></tr>
-					</tbody>
+					<thead>
+						<tr><th>Species</th><th>Date</th><th>Location</th><th>Count</th><th>Dist</th></tr>
+					</thead>
+					<tbody id="birds-table-body"></tbody>
 				</table>
 			</div>
 		</div>
@@ -539,6 +608,94 @@
 		//keeps zoom level consistent
 		var zoomLevel = 10;
 
+		//the bird records currently shown in the results table, and the point distances are measured from
+		var currentResults = [];
+		var currentOrigin = null;
+
+		//great-circle distance in miles
+		function haversineMi(lat1, lng1, lat2, lng2) {
+			var toRad = function(d) { return d * Math.PI / 180; };
+			var dLat = toRad(lat2 - lat1);
+			var dLng = toRad(lng2 - lng1);
+			var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+				Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+			return 3958.8 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+		}
+
+		//defang a third-party HTML snippet before it goes in via innerHTML
+		function scrub(html) {
+			return String(html)
+				.replace(/<\s*script/gi, '&lt;script')
+				.replace(/on[a-z]+\s*=/gi, 'data-x=');
+		}
+
+		//eBird observation count can be absent ("X" = present, not counted)
+		function birdCount(b) {
+			return (b.howMany === undefined || b.howMany === null || b.howMany === '') ? 'X' : b.howMany;
+		}
+
+		//shared popup markup for a bird sighting, including a link to its eBird checklist
+		function popupHtml(b) {
+			var html = '<b>' + b.comName + '</b><br />' +
+				'count: ' + birdCount(b) + '<br />' +
+				'when: ' + b.obsDt + '<br />' +
+				'where: ' + b.locName;
+			if (b.subId) {
+				html += '<br /><a href="https://ebird.org/checklist/' + b.subId +
+					'" target="_blank" rel="noopener">eBird checklist</a>';
+			}
+			return html;
+		}
+
+		//return a copy of arr ordered per the chosen mode
+		function sortBirds(arr, mode) {
+			var a = arr.slice();
+			if (mode === 'name') {
+				a.sort(function(x, y) {
+					return (x.comName || '').toLowerCase().localeCompare((y.comName || '').toLowerCase());
+				});
+			} else if (mode === 'date-asc') {
+				a.sort(function(x, y) { return (x.obsDt || '').localeCompare(y.obsDt || ''); });
+			} else if (mode === 'count-desc') {
+				a.sort(function(x, y) { return (Number(y.howMany) || 0) - (Number(x.howMany) || 0); });
+			} else if (mode === 'distance' && currentOrigin) {
+				a.sort(function(x, y) {
+					return haversineMi(currentOrigin.lat, currentOrigin.lng, x.lat, x.lng) -
+						haversineMi(currentOrigin.lat, currentOrigin.lng, y.lat, y.lng);
+				});
+			} else {
+				//default: date, newest first
+				a.sort(function(x, y) { return (y.obsDt || '').localeCompare(x.obsDt || ''); });
+			}
+			return a;
+		}
+
+		//(re)build the results table body from currentResults using the selected sort order
+		function renderResults() {
+			var tbody = document.getElementById('birds-table-body');
+			var mode = document.getElementById('sort-by').value;
+			tbody.innerHTML = '';
+			//keep the table + sort control hidden until there's something to show
+			document.getElementById('birds-table-container').hidden = currentResults.length === 0;
+			sortBirds(currentResults, mode).forEach(function(b) {
+				var dateCell = b.subId
+					? '<a href="https://ebird.org/checklist/' + b.subId +
+						'" target="_blank" rel="noopener">' + b.obsDt + '</a>'
+					: b.obsDt;
+				var dist = currentOrigin
+					? haversineMi(currentOrigin.lat, currentOrigin.lng, b.lat, b.lng).toFixed(1) + ' mi'
+					: '';
+				var tr = document.createElement('tr');
+				tr.innerHTML =
+					'<td>' + b.comName + '</td>' +
+					'<td>' + dateCell + '</td>' +
+					'<td>' + b.locName + '</td>' +
+					'<td>' + birdCount(b) + '</td>' +
+					'<td>' + dist + '</td>';
+				tbody.appendChild(tr);
+			});
+		}
+
 		//initial ebird query results, keyed by speciesCode - holds sciName/comName for the iNaturalist lookup
 		const initialJson = {birdCodes:{}};
 
@@ -559,8 +716,8 @@
 		const tiles = L.tileLayer(tileUrl,{attribution});
 		tiles.addTo(myMap);
 		
-		//create marker group for birds & hotspots, enables easy clearing of the canvas when changing species
-		var birdMarkers = L.featureGroup();
+		//marker groups for hotspots and for bird sightings; bird sightings cluster so dense
+		//result sets stay readable
 		var hotSpotMarkers = L.featureGroup();
 		var markerCluster = L.markerClusterGroup();
 
@@ -601,14 +758,12 @@
 		const myMarker = L.marker([0, 0], {icon: myIcon}).addTo(myMap).bindPopup("<b>My Location</b><br />",params.lat,params.lng);
 
 
-		//used clear any bird icons, hotspot icons, or table rows that are already on the screen
-		function clearMap() { 
-			var birdsContainer = document.getElementById("birds-table");
-			var rowCount = birdsContainer.rows.length;
-			for (var i = rowCount - 1; i > 0; i--) {
-				birdsContainer.deleteRow(i);
-			};
-			birdMarkers.clearLayers();
+		//clear any bird icons, hotspot icons, and result rows currently on the screen
+		function clearMap() {
+			currentResults = [];
+			currentOrigin = null;
+			document.getElementById("birds-table-body").innerHTML = '';
+			document.getElementById("birds-table-container").hidden = true;
 			hotSpotMarkers.clearLayers();
 			markerCluster.clearLayers();
 		}
@@ -721,42 +876,6 @@
 		}, 6000);
 	
 
-		//alphabetize the table
-		function sortTable() {
-			var table, rows, switching, i, x, y, shouldSwitch;
-			table = document.getElementById("birds-table");
-			switching = true;
-			/* Make a loop that will continue until
-			no switching has been done: */
-			while (switching) {
-				// Start by saying: no switching is done:
-				switching = false;
-				rows = table.rows;
-				/* Loop through all table rows (except the
-				first, which contains table headers): */
-				for (i = 1; i < (rows.length - 1); i++) {
-				// Start by saying there should be no switching:
-				shouldSwitch = false;
-				/* Get the two elements you want to compare,
-				one from current row and one from the next: */
-				x = rows[i].getElementsByTagName("td")[0];
-				y = rows[i + 1].getElementsByTagName("td")[0];
-				// Check if the two rows should switch place:
-				if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-					// If so, mark as a switch and break the loop:
-					shouldSwitch = true;
-					break;
-				}
-				}
-				if (shouldSwitch) {
-				/* If a switch has been marked, make the switch
-				and mark that a switch has been done: */
-				rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-				switching = true;
-				}
-			}
-		}
-
 		//open the modal with a gallery of reference photos from iNaturalist for the selected species
 		async function getImage() {
 			//change 'image search' button color back to base
@@ -779,6 +898,7 @@
 			//show the modal straight away in a loading state
 			modalImg.removeAttribute('src');
 			thumbsEl.innerHTML = '';
+			document.getElementById('bird-blurb').innerHTML = '';
 			document.getElementById('prev-photo').style.display = 'none';
 			document.getElementById('next-photo').style.display = 'none';
 			creditEl.textContent = 'Loading photos…';
@@ -804,10 +924,35 @@
 					return (r.name || '').toLowerCase() === sciName.toLowerCase();
 				})[0] || hits[0];
 
-				//2. fetch the taxon detail, which carries the photo gallery
+				//2. fetch the taxon detail, which carries the photo gallery + a species blurb
 				var taxonRes = await fetch(inatUrl + '/' + match.id);
 				var taxonJson = await taxonRes.json();
 				var detail = (taxonJson.results || [])[0] || {};
+
+				//species blurb: Wikipedia summary (trimmed) + conservation status, shown even if there are no photos
+				var blurbEl = document.getElementById('bird-blurb');
+				if (detail.wikipedia_summary) {
+					var txt = detail.wikipedia_summary;
+					if (txt.length > 500) { txt = txt.slice(0, 500).replace(/\s+\S*$/, '') + '…'; }
+					var blurb = scrub(txt);
+					if (detail.wikipedia_url) {
+						blurb += ' <a href="' + detail.wikipedia_url.replace(/ /g, '_') +
+							'" target="_blank" rel="noopener">Wikipedia</a>';
+					}
+					var cs = detail.conservation_status;
+					if (cs && (cs.status_name || cs.status)) {
+						var iucn = { LC: 'Least Concern', NT: 'Near Threatened', VU: 'Vulnerable',
+							EN: 'Endangered', CR: 'Critically Endangered', EW: 'Extinct in the Wild',
+							EX: 'Extinct', DD: 'Data Deficient' };
+						var raw = (cs.status_name || cs.status || '').toString();
+						var label = iucn[raw.toUpperCase()] || raw;
+						if (raw.length > 3) { label = raw.replace(/\b\w/g, function(c) { return c.toUpperCase(); }); }
+						blurb += '<span class="status">Conservation status: ' + scrub(label) +
+							(cs.authority ? ' (' + scrub(cs.authority) + ')' : '') + '</span>';
+					}
+					blurbEl.innerHTML = blurb;
+				}
+
 				var photos = (detail.taxon_photos || []).map(function(tp) { return tp.photo; });
 				if (!photos.length) {
 					creditEl.textContent = 'No reference photos found for ' + sciName + '.';
@@ -870,10 +1015,9 @@
 			console.log(selectText + ' sent to ebird API');
 
 			//clear any bird icons, hotspot icons, or table rows that are already on the screen
-			var birdsContainer = document.getElementById("birds-table-body");
 			clearMap();
 
-			//bang the url & params against the ebird api and add results to table rows
+			//bang the url & params against the ebird api
 			var esc = encodeURIComponent;
 			var query = Object.keys(params)
 			.map(function(k) {return esc(k) + '=' + esc(params[k]);})
@@ -882,20 +1026,17 @@
 			const response = await fetch(speciesUrl);
 			const birds = await response.json();
 			console.log('got ' + birds.length + ' ' + selectText + ' records');
-			for (var i = 0; i < birds.length; i++) {
-				var row = document.createElement("tr");
-				row.innerHTML = '<td>' + birds[i].comName + '</td><td>' + birds[i].obsDt + '</td><td>' + birds[i].locName + '</td>';
-				birdsContainer.appendChild(row);	
-			};
 
-			sortTable();
+			//stash the records and render the table (distances measured from the user)
+			currentResults = Array.isArray(birds) ? birds : [];
+			currentOrigin = { lat: Number(params.lat), lng: Number(params.lng) };
+			renderResults();
 
-			//drop a bird icon on each location
-			for (var i = 0; i < birds.length; i++) {
-				var popInfo = '<b>' + birds[i].comName + '</b><br /> how many: ' + birds[i].howMany + '</b><br /> when: ' + birds[i].obsDt + '<br /> where: ' + birds[i].locName;
-				L.marker([birds[i].lat,birds[i].lng], {icon:birdMarker}).addTo(birdMarkers).bindPopup(popInfo);
-				birdMarkers.addTo(myMap);
-			};
+			//drop a clustered bird icon on each location
+			currentResults.forEach(function(b) {
+				L.marker([b.lat, b.lng], {icon: birdMarker}).addTo(markerCluster).bindPopup(popupHtml(b));
+			});
+			markerCluster.addTo(myMap);
 
 			//re-center the map & set zoom appropriate to results when done
 			myMap.setView([params.lat, params.lng],zoomLevel);
@@ -950,12 +1091,11 @@
 		async function hotSpotBirds(x,y) {
 
 			//clear any bird icons, hotspot icons, or table rows that are already on the screen
-			var birdsContainer = document.getElementById("birds-table-body");
 			clearMap();
 			hotSpotParams.lat= x ;
 			hotSpotParams.lng = y;
 
-			//bang the url & params against the ebird api and add results to table rows
+			//bang the url & params against the ebird api
 			var esc = encodeURIComponent;
 			var query = Object.keys(hotSpotParams)
 			.map(function(k) {return esc(k) + '=' + esc(hotSpotParams[k]);})
@@ -963,20 +1103,17 @@
 			const response = await fetch(obsUrl + '?' + query);
 			const birds = await response.json();
 			console.log('got ' + birds.length + ' bird records');
-			for (var i = 0; i < birds.length; i++) {
-				var row = document.createElement("tr");
-				row.innerHTML = '<td>' + birds[i].comName + '</td><td>' + birds[i].obsDt + '</td><td>' + birds[i].locName + '</td>';
-				birdsContainer.appendChild(row);	
-			};
 
-			sortTable();
+			//stash the records and render the table (distances measured from the hotspot)
+			currentResults = Array.isArray(birds) ? birds : [];
+			currentOrigin = { lat: Number(x), lng: Number(y) };
+			renderResults();
 
-			//drop a bird icon on each location
-			for (var i = 0; i < birds.length; i++) {
-				var popInfo = '<b>' + birds[i].comName + '</b><br />' + birds[i].obsDt + '<br />' + birds[i].locName;
-				var hotSpotMarker = L.marker([birds[i].lat,birds[i].lng], {icon:birdMarker}).addTo(markerCluster).bindPopup(popInfo);
-				markerCluster.addTo(myMap);
-			};
+			//drop a clustered bird icon on each location
+			currentResults.forEach(function(b) {
+				L.marker([b.lat, b.lng], {icon: birdMarker}).addTo(markerCluster).bindPopup(popupHtml(b));
+			});
+			markerCluster.addTo(myMap);
 
 			//re-center the map & set zoom appropriate to results when done
 			myMap.setView([hotSpotParams.lat, hotSpotParams.lng],zoomLevel);
